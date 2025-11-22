@@ -48,9 +48,9 @@ export class Renderer3D {
 
         console.log('[Renderer3D] Starting initialization...');
 
-        // Create scene with much lighter background for high visibility
+        // Create scene with natural sky background
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x2a2a40); // Much lighter blue-grey
+        this.scene.background = new THREE.Color(0x87CEEB); // Sky blue (realistic outdoor color)
 
         // Setup isometric orthographic camera (Diablo-style)
         const aspect = CFG.W / CFG.H;
@@ -82,12 +82,12 @@ export class Renderer3D {
         this.renderer.setSize(CFG.W, CFG.H, false); // false = don't update style
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap at 2x for performance
 
-        // Enable shadows for dramatic lighting
+        // Enable shadows for realistic depth (Skyrim-style)
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        // Minimal fog - almost completely removed for maximum visibility
-        this.scene.fog = new THREE.FogExp2(0x1a1a30, 0.005); // Extremely light fog
+        // Add subtle atmospheric fog for depth (very light - won't darken scene)
+        this.scene.fog = new THREE.FogExp2(0x87CEEB, 0.008); // Sky blue fog, very light
 
         // Initialize materials
         this.initMaterials();
@@ -108,23 +108,178 @@ export class Renderer3D {
     }
 
     /**
+     * Generate procedural stone texture (realistic grey stone with cracks)
+     */
+    generateStoneTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        // Base stone color (light grey)
+        ctx.fillStyle = '#888888';
+        ctx.fillRect(0, 0, 256, 256);
+
+        // Add noise for stone texture
+        const imageData = ctx.getImageData(0, 0, 256, 256);
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            const noise = (Math.random() - 0.5) * 60;
+            imageData.data[i] += noise;     // R
+            imageData.data[i + 1] += noise; // G
+            imageData.data[i + 2] += noise; // B
+        }
+        ctx.putImageData(imageData, 0, 0);
+
+        // Add darker cracks and variations
+        for (let i = 0; i < 15; i++) {
+            ctx.strokeStyle = `rgba(50, 50, 50, ${0.3 + Math.random() * 0.3})`;
+            ctx.lineWidth = 1 + Math.random() * 2;
+            ctx.beginPath();
+            const x = Math.random() * 256;
+            const y = Math.random() * 256;
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + (Math.random() - 0.5) * 100, y + (Math.random() - 0.5) * 100);
+            ctx.stroke();
+        }
+
+        // Add stone blocks (Skyrim-style)
+        ctx.strokeStyle = 'rgba(60, 60, 60, 0.4)';
+        ctx.lineWidth = 2;
+        for (let y = 0; y < 256; y += 64) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(256, y);
+            ctx.stroke();
+        }
+        for (let x = 0; x < 256; x += 64) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, 256);
+            ctx.stroke();
+        }
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        return texture;
+    }
+
+    /**
+     * Generate procedural grass texture (green grass with dirt)
+     */
+    generateGrassTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        // Base grass color (earthy green)
+        ctx.fillStyle = '#4a6a3a';
+        ctx.fillRect(0, 0, 256, 256);
+
+        // Add grass noise
+        const imageData = ctx.getImageData(0, 0, 256, 256);
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            const noise = (Math.random() - 0.5) * 40;
+            imageData.data[i] += noise - 10;     // R (slightly darker)
+            imageData.data[i + 1] += noise;      // G
+            imageData.data[i + 2] += noise - 20; // B (less blue)
+        }
+        ctx.putImageData(imageData, 0, 0);
+
+        // Add dirt patches
+        for (let i = 0; i < 25; i++) {
+            const x = Math.random() * 256;
+            const y = Math.random() * 256;
+            const radius = 5 + Math.random() * 15;
+
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+            gradient.addColorStop(0, 'rgba(90, 70, 50, 0.6)');
+            gradient.addColorStop(1, 'rgba(90, 70, 50, 0)');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+        }
+
+        // Add grass blades (darker strokes)
+        for (let i = 0; i < 100; i++) {
+            ctx.strokeStyle = `rgba(30, 50, 20, ${0.2 + Math.random() * 0.3})`;
+            ctx.lineWidth = 0.5 + Math.random();
+            ctx.beginPath();
+            const x = Math.random() * 256;
+            const y = Math.random() * 256;
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + (Math.random() - 0.5) * 4, y + (Math.random() - 0.5) * 8);
+            ctx.stroke();
+        }
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        return texture;
+    }
+
+    /**
+     * Generate normal map for stone (adds depth)
+     */
+    generateStoneNormalMap() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        // Base normal (pointing up = light blue)
+        ctx.fillStyle = '#8080ff';
+        ctx.fillRect(0, 0, 256, 256);
+
+        // Add height variations
+        const imageData = ctx.getImageData(0, 0, 256, 256);
+        for (let y = 0; y < 256; y++) {
+            for (let x = 0; x < 256; x++) {
+                const i = (y * 256 + x) * 4;
+                const height = Math.random() * 30;
+                imageData.data[i] = 128 + height; // R (X normal)
+                imageData.data[i + 1] = 128 + height; // G (Y normal)
+                imageData.data[i + 2] = 200 + Math.random() * 55; // B (Z normal - pointing up)
+            }
+        }
+        ctx.putImageData(imageData, 0, 0);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        return texture;
+    }
+
+    /**
      * Initialize materials for different surface types
      */
     initMaterials() {
-        // Floor material - MUCH lighter stone for visibility
+        // Generate textures
+        const stoneTexture = this.generateStoneTexture();
+        const grassTexture = this.generateGrassTexture();
+        const stoneNormalMap = this.generateStoneNormalMap();
+
+        // Floor material - Realistic grass texture
         this.materials.floor = new THREE.MeshStandardMaterial({
-            color: 0x4a5a4a, // Much lighter green-grey
-            roughness: 0.8,
-            metalness: 0.15,
-            flatShading: false
+            map: grassTexture,
+            roughness: 0.9,
+            metalness: 0.0,
+            flatShading: false,
+            emissive: 0x2a3a2a, // Slight self-illumination for visibility
+            emissiveIntensity: 0.2
         });
 
-        // Wall material - lighter stone with high contrast
+        // Wall material - Realistic stone texture with normal map
         this.materials.wall = new THREE.MeshStandardMaterial({
-            color: 0x3a4a3a, // Much lighter
-            roughness: 0.85,
-            metalness: 0.1,
-            flatShading: false
+            map: stoneTexture,
+            normalMap: stoneNormalMap,
+            normalScale: new THREE.Vector2(0.5, 0.5),
+            roughness: 0.8,
+            metalness: 0.0,
+            flatShading: false,
+            emissive: 0x1a1a1a, // Slight self-illumination for visibility
+            emissiveIntensity: 0.2
         });
 
         // Player material - BRIGHT blue armor with strong glow
@@ -174,35 +329,45 @@ export class Renderer3D {
     }
 
     /**
-     * Setup dramatic Diablo-style lighting
+     * Setup realistic outdoor lighting (Skyrim-style)
      */
     setupLighting() {
-        // VERY BRIGHT ambient light - full daylight visibility
-        this.lights.ambient = new THREE.AmbientLight(0xa0a0b0, 1.2); // Dramatically increased
+        // Natural outdoor ambient light (bright but not extreme)
+        this.lights.ambient = new THREE.AmbientLight(0xffffff, 1.5);
         this.scene.add(this.lights.ambient);
 
-        // MASSIVE player torch - like a floodlight
-        this.lights.player = new THREE.PointLight(0xffcc77, 25, 80, 1.0); // Huge intensity and radius
-        this.lights.player.position.set(0, 8, 0); // Raised higher for better coverage
-        this.lights.player.castShadow = true;
+        // Main sun (DirectionalLight from above)
+        const sunLight = new THREE.DirectionalLight(0xffffee, 1.8);
+        sunLight.position.set(20, 40, 15);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 100;
+        sunLight.shadow.camera.left = -30;
+        sunLight.shadow.camera.right = 30;
+        sunLight.shadow.camera.top = 30;
+        sunLight.shadow.camera.bottom = -30;
+        this.scene.add(sunLight);
 
-        // Shadow quality settings
+        // Player torch/lantern (subtle, for indoor areas)
+        this.lights.player = new THREE.PointLight(0xffaa55, 8, 60, 2);
+        this.lights.player.position.set(0, 5, 0);
+        this.lights.player.castShadow = true;
         this.lights.player.shadow.mapSize.width = 1024;
         this.lights.player.shadow.mapSize.height = 1024;
-        this.lights.player.shadow.camera.near = 0.5;
-        this.lights.player.shadow.camera.far = 80;
-
         this.scene.add(this.lights.player);
 
-        // VERY STRONG rim light from above - like sunlight
-        const rimLight = new THREE.DirectionalLight(0xbbccdd, 1.5); // Massive increase
-        rimLight.position.set(5, 20, 5);
-        this.scene.add(rimLight);
+        // Fill light (simulates sky bounce light)
+        const fillLight = new THREE.DirectionalLight(0x6699cc, 0.6);
+        fillLight.position.set(-15, 10, -10);
+        this.scene.add(fillLight);
 
-        console.log('[Renderer3D] Lighting setup complete:');
+        console.log('[Renderer3D] Realistic outdoor lighting setup complete:');
         console.log(`- Ambient: ${this.lights.ambient.intensity}`);
+        console.log(`- Sun: ${sunLight.intensity}`);
         console.log(`- Player torch: ${this.lights.player.intensity} (radius: ${this.lights.player.distance})`);
-        console.log(`- Rim light: ${rimLight.intensity}`);
+        console.log(`- Fill light: ${fillLight.intensity}`);
     }
 
     /**
@@ -468,10 +633,11 @@ export class Renderer3D {
             this.updateParticles(game.particles);
         }
 
-        // Very subtle flicker - keep lighting stable and bright
+        // Subtle torch flicker for realism (Skyrim-style)
         if (this.lights.player) {
-            const flicker = 1 + Math.sin(Date.now() * 0.003) * 0.03; // Minimal flicker
-            this.lights.player.intensity = 25 * flicker; // Base intensity is now 25
+            const baseIntensity = 8;
+            const flickerAmount = Math.sin(Date.now() * 0.003) * 0.3 + Math.random() * 0.2;
+            this.lights.player.intensity = baseIntensity + flickerAmount;
         }
 
         // Render the scene
