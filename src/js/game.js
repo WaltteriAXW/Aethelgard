@@ -12,6 +12,8 @@ import { Player } from './entities/player.js';
 import { Enemy } from './entities/enemy.js';
 import { Wraith } from './entities/wraith.js';
 import { Golem } from './entities/golem.js';
+import { Corpse } from './entities/corpse.js';
+import { BloodStain } from './entities/bloodstain.js';
 import { QuestSystem } from './quest.js';
 
 export class Game {
@@ -27,6 +29,8 @@ export class Game {
         this.player = null;
         this.entities = [];
         this.particles = [];
+        this.corpses = [];
+        this.bloodStains = [];
         this.quest = null;
 
         this.camera = { x: 0, y: 0, shake: 0, shakeX: 0, shakeY: 0, rotation: 0 };
@@ -184,6 +188,21 @@ export class Game {
         // Remove dead particles
         this.particles = this.particles.filter(particle => particle.life > 0);
 
+        // Update corpses
+        this.corpses.forEach(corpse => corpse.update(dt));
+
+        // Remove old corpses (limit for performance)
+        this.corpses = this.corpses.filter(corpse => !corpse.dead);
+        if (this.corpses.length > CFG.MAX_CORPSES) {
+            this.corpses.splice(0, this.corpses.length - CFG.MAX_CORPSES);
+        }
+
+        // Update blood stains
+        this.bloodStains.forEach(stain => stain.update(dt));
+
+        // Remove old blood stains
+        this.bloodStains = this.bloodStains.filter(stain => !stain.dead);
+
         // Update camera
         this.updateCamera(dt);
     }
@@ -272,6 +291,12 @@ export class Game {
         this.ctx.translate(-cameraX, -cameraY);
 
         this.map.draw(this.ctx, { x: cameraX, y: cameraY });
+
+        // Draw blood stains on ground (before entities)
+        this.bloodStains.forEach(stain => stain.draw(this.ctx));
+
+        // Draw corpses on ground (before living entities)
+        this.corpses.forEach(corpse => corpse.draw(this.ctx));
 
         // Draw floor reflections
         this.drawFloorReflections(cameraX, cameraY);
