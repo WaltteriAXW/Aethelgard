@@ -162,7 +162,7 @@ export class FloatingText {
 }
 
 /**
- * Slash attack effect
+ * Enhanced slash attack effect with bloom
  */
 export class SlashEffect {
     constructor(x, y, direction, combo) {
@@ -170,12 +170,23 @@ export class SlashEffect {
         this.y = y;
         this.direction = direction;
         this.combo = combo;
-        this.life = 0.15;
-        this.maxLife = 0.15;
+        this.life = 0.2;
+        this.maxLife = 0.2;
 
-        // Combo 3 gets special color
-        this.color = combo === 3 ? '#ff006e' : '#fff';
-        this.secondaryColor = combo === 3 ? '#ff6b9d' : '#aaa';
+        // Vibrant colors based on combo
+        if (combo === 3) {
+            this.color = '#ff006e';           // Hot pink
+            this.secondaryColor = '#ff6b9d';  // Light pink
+            this.glowColor = '#ff00ff';       // Magenta
+        } else if (combo === 2) {
+            this.color = '#00ffcc';           // Cyan
+            this.secondaryColor = '#66ffdd';  // Light cyan
+            this.glowColor = '#00ffff';       // Bright cyan
+        } else {
+            this.color = '#00ffcc';           // Cyan
+            this.secondaryColor = '#88ffee';  // Very light cyan
+            this.glowColor = '#00ddff';       // Blue cyan
+        }
     }
 
     update(dt) {
@@ -188,35 +199,63 @@ export class SlashEffect {
         ctx.scale(this.direction, 1);
 
         const alpha = this.life / this.maxLife;
-        const expansion = (1 - alpha) * 20;
+        const expansion = (1 - alpha) * 25;
+
+        // Draw bloom glow layer first
+        ctx.globalCompositeOperation = 'screen';
+        ctx.globalAlpha = alpha * 0.6;
+
+        const glowGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 60 + expansion);
+        glowGradient.addColorStop(0, this.glowColor + 'aa');
+        glowGradient.addColorStop(0.5, this.glowColor + '44');
+        glowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        ctx.fillStyle = glowGradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, 60 + expansion, -Math.PI / 2.5, Math.PI / 2.5);
+        ctx.lineTo(0, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.globalCompositeOperation = 'source-over';
 
         // Draw multiple overlapping arcs for depth
-        for (let i = 0; i < 3; i++) {
-            ctx.globalAlpha = alpha * (1 - i * 0.3);
+        for (let i = 0; i < 4; i++) {
+            ctx.globalAlpha = alpha * (1 - i * 0.2);
             ctx.strokeStyle = i === 0 ? this.color : this.secondaryColor;
-            ctx.lineWidth = 4 - i;
+            ctx.lineWidth = 6 - i;
 
             ctx.beginPath();
-            ctx.arc(0, 0, 40 + expansion + i * 5, -Math.PI / 3, Math.PI / 3);
+            ctx.arc(0, 0, 45 + expansion + i * 6, -Math.PI / 3, Math.PI / 3);
             ctx.stroke();
         }
 
-        // Add speed lines for combo 3
+        // Add energy trails for all combos
+        ctx.globalAlpha = alpha * 0.8;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.combo === 3 ? 3 : 2;
+
+        const lineCount = this.combo === 3 ? 7 : 5;
+        for (let i = 0; i < lineCount; i++) {
+            const angle = -Math.PI / 4 + (i * Math.PI) / (lineCount + 1);
+            const startDist = 25;
+            const endDist = 55 + expansion + (this.combo * 5);
+
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(angle) * startDist, Math.sin(angle) * startDist);
+            ctx.lineTo(Math.cos(angle) * endDist, Math.sin(angle) * endDist);
+            ctx.stroke();
+        }
+
+        // Extra impact for combo 3
         if (this.combo === 3) {
-            ctx.globalAlpha = alpha;
-            ctx.strokeStyle = this.color;
-            ctx.lineWidth = 2;
+            ctx.globalAlpha = alpha * 0.5;
+            ctx.strokeStyle = this.glowColor;
+            ctx.lineWidth = 8;
 
-            for (let i = 0; i < 5; i++) {
-                const angle = -Math.PI / 4 + (i * Math.PI) / 8;
-                const startDist = 20;
-                const endDist = 50 + expansion;
-
-                ctx.beginPath();
-                ctx.moveTo(Math.cos(angle) * startDist, Math.sin(angle) * startDist);
-                ctx.lineTo(Math.cos(angle) * endDist, Math.sin(angle) * endDist);
-                ctx.stroke();
-            }
+            ctx.beginPath();
+            ctx.arc(0, 0, 50 + expansion, -Math.PI / 3.5, Math.PI / 3.5);
+            ctx.stroke();
         }
 
         ctx.restore();

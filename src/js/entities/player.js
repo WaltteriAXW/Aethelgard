@@ -110,13 +110,23 @@ export class Player extends Entity {
         const attackY = this.y + 16;
         const attackRange = 40;
 
-        // Create visual effect
+        // Create enhanced slash visual effect
         game.particles.push(new SlashEffect(
             this.x + 16,
             this.y + 16,
             this.face,
             this.combo
         ));
+
+        // Add weapon trail particles for impact
+        const trailColor = this.combo === 3 ? '#ff006e' : '#00ffcc';
+        for (let i = 0; i < 3; i++) {
+            game.particles.push(new Particle(
+                attackX + (Math.random() - 0.5) * 20,
+                attackY + (Math.random() - 0.5) * 20,
+                trailColor
+            ));
+        }
 
         // Check for hits
         game.entities.forEach(entity => {
@@ -196,6 +206,70 @@ export class Player extends Entity {
         ));
 
         this.updateUI();
+    }
+
+    /**
+     * Enhanced draw with weapon glow and aura effects
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     */
+    draw(ctx) {
+        const sprite = window.game?.graphics?.get(this.spriteKey);
+        if (!sprite) {
+            super.draw(ctx);
+            return;
+        }
+
+        // Draw glow aura when dashing or in combo
+        if (this.dashTimer > 0 || this.comboTimer > 0) {
+            const glowColor = this.combo === 3 ? 'rgba(255, 0, 110, 0.4)' : 'rgba(0, 255, 204, 0.4)';
+            const glowRadius = this.dashTimer > 0 ? 35 : 25;
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'screen';
+
+            const gradient = ctx.createRadialGradient(
+                this.x + 16, this.y + 16, 0,
+                this.x + 16, this.y + 16, glowRadius
+            );
+            gradient.addColorStop(0, glowColor);
+            gradient.addColorStop(0.5, glowColor.replace('0.4', '0.2'));
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(this.x + 16, this.y + 16, glowRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // Draw weapon glow when in combo
+        if (this.comboTimer > 0) {
+            const weaponGlowColor = this.combo === 3 ? '#ff006e' : '#00ffcc';
+            const weaponX = this.x + 16 + (this.face * 12);
+            const weaponY = this.y + 8;
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = 0.6;
+
+            const weaponGradient = ctx.createRadialGradient(
+                weaponX, weaponY, 0,
+                weaponX, weaponY, 15
+            );
+            weaponGradient.addColorStop(0, weaponGlowColor);
+            weaponGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            ctx.fillStyle = weaponGradient;
+            ctx.beginPath();
+            ctx.arc(weaponX, weaponY, 15, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // Call parent draw for the actual sprite
+        super.draw(ctx);
     }
 
     /**
