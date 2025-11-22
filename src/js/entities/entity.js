@@ -24,6 +24,16 @@ export class Entity {
         this.face = 1;  // Facing direction (-1 = left, 1 = right)
         this.flash = 0;  // Flash effect timer
         this.dead = false;
+
+        // Animation system
+        this.animTime = Math.random() * Math.PI * 2; // Random start for variety
+        this.breatheScale = 1;
+        this.idleOffset = { x: 0, y: 0 };
+        this.squashStretch = { x: 1, y: 1 };
+
+        // Motion trail system
+        this.trail = [];
+        this.maxTrailLength = 8;
     }
 
     /**
@@ -31,6 +41,10 @@ export class Entity {
      * @param {number} dt - Delta time in seconds
      */
     update(dt) {
+        // Store previous position for trail
+        const prevX = this.x;
+        const prevY = this.y;
+
         // Apply velocity
         this.x += this.vx * dt;
         this.handleCollision(true);
@@ -42,6 +56,51 @@ export class Entity {
         if (this.flash > 0) {
             this.flash -= dt;
         }
+
+        // Update animation time
+        this.animTime += dt;
+
+        // Breathing animation (gentle scale pulse)
+        this.breatheScale = 1 + Math.sin(this.animTime * 2) * 0.03;
+
+        // Idle movement (gentle floating/bobbing)
+        this.idleOffset.y = Math.sin(this.animTime * 1.5) * 1.5;
+        this.idleOffset.x = Math.cos(this.animTime * 0.8) * 0.5;
+
+        // Squash and stretch based on velocity
+        const speed = Math.hypot(this.vx, this.vy);
+        if (speed > 50) {
+            // Moving fast - stretch in direction of movement
+            const angle = Math.atan2(this.vy, this.vx);
+            const stretchAmount = Math.min(speed / 500, 0.15);
+            this.squashStretch.x = 1 + Math.abs(Math.cos(angle)) * stretchAmount;
+            this.squashStretch.y = 1 + Math.abs(Math.sin(angle)) * stretchAmount;
+        } else {
+            // Return to normal
+            this.squashStretch.x += (1 - this.squashStretch.x) * dt * 10;
+            this.squashStretch.y += (1 - this.squashStretch.y) * dt * 10;
+        }
+
+        // Update motion trail
+        const hasMoved = Math.abs(this.x - prevX) > 0.5 || Math.abs(this.y - prevY) > 0.5;
+        if (hasMoved && speed > 100) {
+            this.trail.unshift({
+                x: prevX + this.w / 2,
+                y: prevY + this.h / 2,
+                alpha: 1,
+                time: 0
+            });
+            if (this.trail.length > this.maxTrailLength) {
+                this.trail.pop();
+            }
+        }
+
+        // Update and fade trail
+        this.trail.forEach((point, i) => {
+            point.time += dt;
+            point.alpha = Math.max(0, 1 - point.time * 3);
+        });
+        this.trail = this.trail.filter(p => p.alpha > 0);
     }
 
     /**
@@ -78,17 +137,26 @@ export class Entity {
     }
 
     /**
-     * Draw the entity with modern gradient-based rendering
+     * Draw the entity with modern gradient-based rendering and animations
      * @param {CanvasRenderingContext2D} ctx - Canvas context
      */
     draw(ctx) {
+        // Draw motion trail
+        this.drawMotionTrail(ctx);
+
         // Draw shadow beneath entity
         this.drawModernShadow(ctx);
 
         ctx.save();
         ctx.translate(
-            Math.floor(this.x + this.w / 2),
-            Math.floor(this.y + this.h / 2)
+            Math.floor(this.x + this.w / 2 + this.idleOffset.x),
+            Math.floor(this.y + this.h / 2 + this.idleOffset.y)
+        );
+
+        // Apply breathing and squash/stretch animation
+        ctx.scale(
+            this.breatheScale * this.squashStretch.x,
+            this.breatheScale * this.squashStretch.y
         );
 
         // Draw modern character based on sprite key
@@ -126,6 +194,41 @@ export class Entity {
             ctx.fillStyle = flashGradient;
             ctx.fillRect(-20, -20, 40, 40);
         }
+
+        ctx.restore();
+    }
+
+    /**
+     * Draw motion trail effect for fast movement
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     */
+    drawMotionTrail(ctx) {
+        if (this.trail.length === 0) return;
+
+        ctx.save();
+
+        // Get character color based on type
+        let trailColor;
+        switch(this.spriteKey) {
+            case 'hero': trailColor = '100, 150, 255'; break; // Blue
+            case 'skel': trailColor = '255, 100, 100'; break; // Red
+            case 'wraith': trailColor = '180, 100, 220'; break; // Purple
+            case 'golem': trailColor = '150, 150, 170'; break; // Gray
+            case 'orb': trailColor = '255, 200, 50'; break; // Gold
+            default: trailColor = '200, 200, 200';
+        }
+
+        this.trail.forEach((point, i) => {
+            const size = 16 * (1 - i / this.trail.length);
+            const alpha = point.alpha * 0.3;
+
+            const gradient = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, size);
+            gradient.addColorStop(0, `rgba(${trailColor}, ${alpha})`);
+            gradient.addColorStop(1, `rgba(${trailColor}, 0)`);
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(point.x - size, point.y - size, size * 2, size * 2);
+        });
 
         ctx.restore();
     }
