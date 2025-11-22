@@ -103,14 +103,93 @@
             <div class="subtitle">
                 Illuminated Ruins • Combo Combat • Procedural Audio<br><br>
                 <strong>Controls:</strong><br>
-                WASD/Arrows: Move | SPACE: Attack | SHIFT: Dash
+                WASD/Arrows: Move | SPACE: Attack | SHIFT: Dash | 1-4: Skills
             </div>
-            <button class="start-btn" onclick="initGame()">AWAKEN</button>
+            <button class="start-btn" onclick="showClassSelection()">AWAKEN</button>
+        </div>
+
+        <!-- Class Selection Overlay -->
+        <div id="class-selection" style="display: none;">
+            <div class="class-select-title">CHOOSE YOUR PATH</div>
+
+            <div class="class-grid">
+                <!-- Warrior -->
+                <div class="class-card" data-class="WARRIOR" onclick="selectClass('WARRIOR')">
+                    <div class="class-icon">⚔️</div>
+                    <div class="class-name">WARRIOR</div>
+                    <div class="class-desc">Master of melee combat with high health and devastating strikes</div>
+                    <div class="class-stats">
+                        <div class="stat-item">❤️ HP: 150</div>
+                        <div class="stat-item">💧 MANA: 50</div>
+                        <div class="stat-item">⚡ SPD: Medium</div>
+                        <div class="stat-item">⚔️ DMG: High</div>
+                    </div>
+                </div>
+
+                <!-- Rogue -->
+                <div class="class-card" data-class="ROGUE" onclick="selectClass('ROGUE')">
+                    <div class="class-icon">🗡️</div>
+                    <div class="class-name">ROGUE</div>
+                    <div class="class-desc">Swift assassin with deadly precision and shadow powers</div>
+                    <div class="class-stats">
+                        <div class="stat-item">❤️ HP: 80</div>
+                        <div class="stat-item">💧 MANA: 100</div>
+                        <div class="stat-item">⚡ SPD: Very High</div>
+                        <div class="stat-item">⚔️ DMG: Medium</div>
+                    </div>
+                </div>
+
+                <!-- Mage -->
+                <div class="class-card" data-class="MAGE" onclick="selectClass('MAGE')">
+                    <div class="class-icon">🔮</div>
+                    <div class="class-name">MAGE</div>
+                    <div class="class-desc">Wielder of elemental magic with devastating spells</div>
+                    <div class="class-stats">
+                        <div class="stat-item">❤️ HP: 60</div>
+                        <div class="stat-item">💧 MANA: 150</div>
+                        <div class="stat-item">⚡ SPD: Low</div>
+                        <div class="stat-item">⚔️ DMG: Very High</div>
+                    </div>
+                </div>
+
+                <!-- Paladin -->
+                <div class="class-card" data-class="PALADIN" onclick="selectClass('PALADIN')">
+                    <div class="class-icon">✨</div>
+                    <div class="class-name">PALADIN</div>
+                    <div class="class-desc">Holy warrior who balances offense and defense</div>
+                    <div class="class-stats">
+                        <div class="stat-item">❤️ HP: 120</div>
+                        <div class="stat-item">💧 MANA: 80</div>
+                        <div class="stat-item">⚡ SPD: Medium</div>
+                        <div class="stat-item">⚔️ DMG: Medium-High</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="class-select-hint">Click a class to begin your journey</div>
         </div>
     </div>
 
     <!-- Game Scripts (ES6 Modules) -->
     <script type="module" src="src/js/game.js"></script>
+
+    <!-- Class Selection Script -->
+    <script type="module">
+        import { getClass } from './src/js/classes.js';
+
+        window.selectedClass = null;
+
+        window.showClassSelection = function() {
+            document.getElementById('start-overlay').style.display = 'none';
+            document.getElementById('class-selection').style.display = 'flex';
+        };
+
+        window.selectClass = function(className) {
+            window.selectedClass = className;
+            document.getElementById('class-selection').style.display = 'none';
+            window.initGame();
+        };
+    </script>
 
     <!-- Service Worker Registration -->
     <script>

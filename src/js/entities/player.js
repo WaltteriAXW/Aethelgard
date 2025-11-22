@@ -9,24 +9,50 @@ import { input } from '../input.js';
 import { audioSystem } from '../audio.js';
 import { Enemy } from './enemy.js';
 import { SlashEffect, Particle, FloatingText } from '../particles/particles.js';
+import { getClass } from '../classes.js';
 
 export class Player extends Entity {
-    constructor(x, y) {
+    constructor(x, y, className = 'WARRIOR') {
         super(x, y, 'hero');
 
-        this.speed = CFG.PLAYER_SPEED;
+        // Load class definition
+        this.class = getClass(className);
+        this.className = className;
+
+        // Apply class stats
+        this.speed = this.class.baseSpeed;
+        this.baseDamage = this.class.baseDamage;
         this.dashTimer = 0;
         this.combo = 0;
         this.comboTimer = 0;
 
+        // Initialize stats from class
         this.stats = {
-            hp: CFG.PLAYER_START_HP,
-            maxHp: CFG.PLAYER_START_HP,
-            mana: CFG.PLAYER_START_MANA,
-            maxMana: CFG.PLAYER_START_MANA,
+            hp: this.class.baseHp,
+            maxHp: this.class.baseHp,
+            mana: this.class.baseMana,
+            maxMana: this.class.baseMana,
             xp: 0,
-            level: 1
+            level: 1,
+            // Attribute stats
+            strength: this.class.strength,
+            dexterity: this.class.dexterity,
+            intelligence: this.class.intelligence,
+            vitality: this.class.vitality
         };
+
+        // Skills and cooldowns
+        this.skills = {};
+        this.skillCooldowns = {};
+
+        // Initialize skills from class
+        this.class.skills.forEach(skill => {
+            this.skills[skill.id] = skill;
+            this.skillCooldowns[skill.id] = 0;
+        });
+
+        // Update UI with class name
+        this.updateClassUI();
     }
 
     /**
@@ -195,8 +221,10 @@ export class Player extends Entity {
 
         this.stats.xp = 0;
         this.stats.level++;
-        this.stats.maxHp += CFG.HP_PER_LEVEL;
-        this.stats.maxMana += CFG.MANA_PER_LEVEL;
+
+        // Use class-specific scaling
+        this.stats.maxHp += this.class.hpPerLevel;
+        this.stats.maxMana += this.class.manaPerLevel;
         this.stats.hp = this.stats.maxHp;
         this.stats.mana = this.stats.maxMana;
 
@@ -293,6 +321,17 @@ export class Player extends Entity {
         const levelText = document.getElementById('lvl-txt');
         if (levelText) {
             levelText.innerText = "LVL " + this.stats.level;
+        }
+    }
+
+    /**
+     * Update class name in UI
+     */
+    updateClassUI() {
+        const classNameEl = document.getElementById('class-name');
+        if (classNameEl) {
+            classNameEl.innerText = this.class.name.toUpperCase();
+            classNameEl.style.color = this.class.color;
         }
     }
 

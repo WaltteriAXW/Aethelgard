@@ -85,8 +85,9 @@ export class Game {
         this.map = new MapSystem(CFG.MAP_WIDTH, CFG.MAP_HEIGHT);
         const startPos = this.map.generate();
 
-        // Create player
-        this.player = new Player(startPos.x, startPos.y);
+        // Create player with selected class
+        const selectedClass = window.selectedClass || 'WARRIOR';
+        this.player = new Player(startPos.x, startPos.y, selectedClass);
         this.entities = [this.player];
 
         // Spawn enemies
