@@ -66,5 +66,13 @@ export const CFG = {
 
     // Loot settings
     LOOT_BEAM_HEIGHT: 120,          // Height of colored loot beam
-    LOOT_RARITIES: ['common', 'uncommon', 'rare', 'epic', 'legendary']
+    LOOT_RARITIES: ['common', 'uncommon', 'rare', 'epic', 'legendary'],
+
+    // 3D RENDERING SETTINGS (Three.js)
+    USE_3D_RENDERER: true,          // Enable WebGL 3D rendering (Modern Diablo style)
+    SHADOW_QUALITY: 'medium',       // Shadow map quality: 'low', 'medium', 'high'
+    ISOMETRIC_ANGLE: 45,            // Camera angle in degrees
+    CAMERA_ZOOM: 20,                // Orthographic camera zoom level (lower = closer)
+    ENABLE_BLOOM: false,            // Post-processing bloom effect (performance impact)
+    ENABLE_ANTIALIASING: true       // Smooth edges (slight performance impact)
 };
