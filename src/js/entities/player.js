@@ -100,6 +100,9 @@ export class Player extends Entity {
         }
         this.comboTimer = CFG.COMBO_TIMEOUT;
 
+        // Show combo indicator on screen
+        this.showComboIndicator();
+
         audioSystem.sfx.slash();
 
         // Attack hitbox
@@ -211,9 +214,12 @@ export class Player extends Entity {
         // Update UI
         this.updateUI();
 
-        // Camera shake
+        // Directional camera shake from damage source
         if (game.camera) {
-            game.camera.shake = 1;
+            // Calculate direction from damage (assume from closest enemy)
+            const dirX = Math.random() - 0.5;
+            const dirY = Math.random() - 0.5;
+            game.addShake(1, dirX, dirY, false);
         }
 
         // Game over
@@ -237,9 +243,44 @@ export class Player extends Entity {
             xpBar.style.width = (this.stats.xp / xpRequired) * 100 + "%";
         }
 
+        // Update HP bar glow effect when low
+        const hpWrap = document.querySelector('.bar-wrap');
+        if (hpWrap && this.stats.hp < this.stats.maxHp * 0.25) {
+            hpWrap.classList.add('low-hp');
+        } else if (hpWrap) {
+            hpWrap.classList.remove('low-hp');
+        }
+
         const levelText = document.getElementById('lvl-txt');
         if (levelText) {
             levelText.innerText = "LVL " + this.stats.level;
         }
+    }
+
+    /**
+     * Show combo indicator on screen
+     */
+    showComboIndicator() {
+        const indicator = document.getElementById('combo-indicator');
+        if (!indicator) return;
+
+        // Set combo text
+        indicator.textContent = `COMBO x${this.combo}!`;
+        indicator.style.display = 'block';
+
+        // Remove animation class if exists
+        indicator.classList.remove('combo-glow');
+
+        // Trigger reflow to restart animation
+        void indicator.offsetWidth;
+
+        // Add animation class
+        indicator.classList.add('combo-glow');
+
+        // Hide after animation
+        setTimeout(() => {
+            indicator.style.display = 'none';
+            indicator.classList.remove('combo-glow');
+        }, 500);
     }
 }

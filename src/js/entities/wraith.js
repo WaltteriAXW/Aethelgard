@@ -5,6 +5,8 @@
 
 import { Enemy } from './enemy.js';
 import { CFG } from '../config.js';
+import { Particle } from '../particles/particles.js';
+import { Loot } from './loot.js';
 
 export class Wraith extends Enemy {
     constructor(x, y) {
@@ -45,6 +47,8 @@ export class Wraith extends Enemy {
             // Dash behavior
             if (this.dashTimer > 0) {
                 this.dashTimer -= dt;
+                // Add purple mist trail while dashing
+                this.addMistTrail(game);
             } else if (distance < 200 && distance > 50) {
                 // Dash towards player
                 this.vx = (dx / normalizedDistance) * 1200;
@@ -54,6 +58,13 @@ export class Wraith extends Enemy {
                 // Normal movement (faster than regular enemy)
                 this.vx += (dx / normalizedDistance) * 1200 * dt;
                 this.vy += (dy / normalizedDistance) * 1200 * dt;
+            }
+
+            // Add faint trail when moving fast
+            if (Math.hypot(this.vx, this.vy) > 300) {
+                if (Math.random() < 0.3) {
+                    this.addMistTrail(game);
+                }
             }
 
             // Attack if in range
@@ -78,5 +89,43 @@ export class Wraith extends Enemy {
         // Call base entity update (not Enemy's update to avoid double logic)
         const Entity = Object.getPrototypeOf(Object.getPrototypeOf(this)).constructor;
         Entity.prototype.update.call(this, dt);
+    }
+
+    /**
+     * Add purple mist trail effect
+     * @param {Game} game - Game instance
+     */
+    addMistTrail(game) {
+        game.particles.push(new Particle(
+            this.x + 16 + (Math.random() - 0.5) * 10,
+            this.y + 16 + (Math.random() - 0.5) * 10,
+            '#6a4c93'
+        ));
+    }
+
+    /**
+     * Override die to add purple particles
+     */
+    die() {
+        const game = window.game;
+
+        this.dead = true;
+
+        // Drop loot
+        game.entities.push(new Loot(this.x, this.y));
+
+        // Purple mist explosion
+        for (let i = 0; i < 12; i++) {
+            game.particles.push(new Particle(
+                this.x + 16,
+                this.y + 16,
+                i % 2 === 0 ? '#6a4c93' : '#b185db'
+            ));
+        }
+
+        // Update quest progress
+        if (game.quest) {
+            game.quest.progress();
+        }
     }
 }

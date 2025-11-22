@@ -101,12 +101,12 @@ export class Enemy extends Entity {
         // Drop loot
         game.entities.push(new Loot(this.x, this.y));
 
-        // Death particles
-        for (let i = 0; i < 8; i++) {
+        // Skeleton-specific: Bone fragment particles
+        for (let i = 0; i < 10; i++) {
             game.particles.push(new Particle(
                 this.x + 16,
                 this.y + 16,
-                '#900'
+                i % 3 === 0 ? '#e1e5f2' : '#ccc'
             ));
         }
 
