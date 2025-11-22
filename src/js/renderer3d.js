@@ -48,9 +48,9 @@ export class Renderer3D {
 
         console.log('[Renderer3D] Starting initialization...');
 
-        // Create scene with dark background
+        // Create scene with dark but visible background
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x1a1a2e); // Lighter for debugging
+        this.scene.background = new THREE.Color(0x1a1a30); // Slightly lighter for better visibility
 
         // Setup isometric orthographic camera (Diablo-style)
         const aspect = CFG.W / CFG.H;
@@ -86,8 +86,8 @@ export class Renderer3D {
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        // Setup fog for atmospheric depth
-        this.scene.fog = new THREE.FogExp2(0x0a0a0f, 0.04);
+        // Setup fog for atmospheric depth (reduced density for better visibility)
+        this.scene.fog = new THREE.FogExp2(0x0a0a0f, 0.02); // Reduced from 0.04
 
         // Initialize materials
         this.initMaterials();
@@ -177,12 +177,12 @@ export class Renderer3D {
      * Setup dramatic Diablo-style lighting
      */
     setupLighting() {
-        // Ambient light - brighter for debugging, will dim later
-        this.lights.ambient = new THREE.AmbientLight(0x606080, 0.4); // Increased from 0.15
+        // Ambient light - much brighter for better visibility
+        this.lights.ambient = new THREE.AmbientLight(0x707090, 0.6); // Increased from 0.4
         this.scene.add(this.lights.ambient);
 
         // Player's torch (main light source - follows player)
-        this.lights.player = new THREE.PointLight(0xffaa55, 5, 30, 2); // Increased intensity and radius
+        this.lights.player = new THREE.PointLight(0xffbb66, 12, 50, 1.5); // Much brighter and larger radius
         this.lights.player.position.set(0, 5, 0);
         this.lights.player.castShadow = true;
 
@@ -194,8 +194,8 @@ export class Renderer3D {
 
         this.scene.add(this.lights.player);
 
-        // Subtle rim light from above (for character definition)
-        const rimLight = new THREE.DirectionalLight(0x8899aa, 0.5); // Increased from 0.3
+        // Stronger rim light from above (for better character definition)
+        const rimLight = new THREE.DirectionalLight(0x99aacc, 0.8); // Increased from 0.5
         rimLight.position.set(5, 20, 5);
         this.scene.add(rimLight);
 
@@ -470,8 +470,8 @@ export class Renderer3D {
 
         // Flicker player light for atmosphere
         if (this.lights.player) {
-            const flicker = 1 + Math.sin(Date.now() * 0.003) * 0.1;
-            this.lights.player.intensity = 5 * flicker; // Base intensity is now 5
+            const flicker = 1 + Math.sin(Date.now() * 0.003) * 0.08; // Reduced flicker amount
+            this.lights.player.intensity = 12 * flicker; // Base intensity is now 12
         }
 
         // Render the scene
