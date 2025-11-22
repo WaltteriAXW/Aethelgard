@@ -383,11 +383,12 @@ export class Game {
 
         this.ctx.restore();
 
-        // Apply darkness overlay on top
-        this.ctx.globalCompositeOperation = 'source-over';
-        const overlayAlpha = CFG.LIGHT_OPACITY * 0.5;
-        this.ctx.fillStyle = `rgba(15, 20, 45, ${overlayAlpha})`;
-        this.ctx.fillRect(0, 0, CFG.W, CFG.H);
+        // Optional: Very subtle darkness overlay (disabled for testing)
+        // Uncomment to add atmospheric darkness
+        // this.ctx.globalCompositeOperation = 'source-over';
+        // const overlayAlpha = 0.1;
+        // this.ctx.fillStyle = `rgba(15, 20, 45, ${overlayAlpha})`;
+        // this.ctx.fillRect(0, 0, CFG.W, CFG.H);
     }
 
     /**
