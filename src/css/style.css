@@ -453,3 +453,575 @@ canvas {
     pointer-events: none;
     z-index: 50;
 }
+
+/* ==========================================
+   DIABLO-STYLE HEALTH & MANA ORBS
+   ========================================== */
+
+.orb-container {
+    position: absolute;
+    bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    z-index: 25;
+}
+
+.orb-container.left-orb {
+    left: 40px;
+}
+
+.orb-container.right-orb {
+    right: 40px;
+}
+
+/* The Spherical Orb */
+.orb-sphere {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #0a0a0a;
+    border: 3px solid #222;
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.8),
+        inset 0 -10px 20px rgba(0, 0, 0, 0.6),
+        inset 0 10px 20px rgba(255, 255, 255, 0.1);
+}
+
+/* The Liquid Fill (Health or Mana) */
+.orb-liquid {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    transition: height 0.3s ease-out;
+    border-radius: 50%;
+}
+
+/* Health Orb Liquid - Deep Crimson Red */
+.health-orb .orb-liquid {
+    background: linear-gradient(
+        to bottom,
+        #8B0000 0%,
+        #B22222 20%,
+        #DC143C 50%,
+        #8B0000 100%
+    );
+    box-shadow:
+        inset 0 -15px 30px rgba(0, 0, 0, 0.5),
+        0 0 30px rgba(220, 20, 60, 0.6);
+    animation: liquid-pulse-health 2s ease-in-out infinite;
+}
+
+@keyframes liquid-pulse-health {
+    0%, 100% {
+        filter: brightness(1);
+    }
+    50% {
+        filter: brightness(1.15);
+    }
+}
+
+/* Mana Orb Liquid - Deep Sapphire Blue */
+.mana-orb .orb-liquid {
+    background: linear-gradient(
+        to bottom,
+        #00008B 0%,
+        #0000CD 20%,
+        #1E90FF 50%,
+        #00008B 100%
+    );
+    box-shadow:
+        inset 0 -15px 30px rgba(0, 0, 0, 0.5),
+        0 0 30px rgba(30, 144, 255, 0.6);
+    animation: liquid-pulse-mana 2s ease-in-out infinite;
+}
+
+@keyframes liquid-pulse-mana {
+    0%, 100% {
+        filter: brightness(1);
+    }
+    50% {
+        filter: brightness(1.2);
+    }
+}
+
+/* Glass Reflection Effect */
+.orb-glass {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.4) 0%,
+        rgba(255, 255, 255, 0) 30%,
+        rgba(0, 0, 0, 0.1) 60%,
+        rgba(255, 255, 255, 0.2) 100%
+    );
+    pointer-events: none;
+}
+
+/* Shiny Highlight */
+.orb-shine {
+    position: absolute;
+    top: 12px;
+    left: 18px;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: radial-gradient(
+        circle at 30% 30%,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0.4) 40%,
+        rgba(255, 255, 255, 0) 70%
+    );
+    pointer-events: none;
+    animation: orb-shine-pulse 3s ease-in-out infinite;
+}
+
+@keyframes orb-shine-pulse {
+    0%, 100% {
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Orb Label */
+.orb-label {
+    margin-top: 10px;
+    font-size: 9px;
+    color: #999;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    letter-spacing: 2px;
+}
+
+/* Orb Value (e.g., "100/100") */
+.orb-value {
+    font-size: 11px;
+    margin-top: 4px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+}
+
+.left-orb .orb-value {
+    color: #DC143C;
+}
+
+.right-orb .orb-value {
+    color: #1E90FF;
+}
+
+/* Low Health Warning */
+@keyframes orb-warning {
+    0%, 100% {
+        box-shadow:
+            0 8px 20px rgba(0, 0, 0, 0.8),
+            inset 0 -10px 20px rgba(0, 0, 0, 0.6),
+            0 0 20px rgba(220, 20, 60, 0.8);
+    }
+    50% {
+        box-shadow:
+            0 8px 20px rgba(0, 0, 0, 0.8),
+            inset 0 -10px 20px rgba(0, 0, 0, 0.6),
+            0 0 40px rgba(220, 20, 60, 1),
+            0 0 60px rgba(220, 20, 60, 0.6);
+    }
+}
+
+.health-orb.low-health {
+    animation: orb-warning 0.8s ease-in-out infinite;
+}
+
+/* Responsive Orbs */
+@media (max-width: 768px) {
+    .orb-sphere {
+        width: 70px;
+        height: 70px;
+    }
+
+    .orb-shine {
+        top: 8px;
+        left: 12px;
+        width: 25px;
+        height: 25px;
+    }
+
+    .orb-label {
+        font-size: 7px;
+    }
+
+    .orb-value {
+        font-size: 9px;
+    }
+
+    .orb-container.left-orb {
+        left: 20px;
+        bottom: 15px;
+    }
+
+    .orb-container.right-orb {
+        right: 20px;
+        bottom: 15px;
+    }
+}
+
+/* ==========================================
+   CLASS SELECTION SCREEN
+   ========================================== */
+
+#class-selection {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    box-sizing: border-box;
+}
+
+.class-select-title {
+    font-size: 32px;
+    color: var(--gold);
+    text-shadow: 3px 3px 0 #e63946, 0 0 20px var(--gold);
+    margin-bottom: 40px;
+    letter-spacing: 4px;
+    animation: title-pulse 2s ease-in-out infinite;
+}
+
+@keyframes title-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.class-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+    max-width: 900px;
+    width: 100%;
+}
+
+.class-card {
+    background: linear-gradient(135deg, rgba(29, 53, 87, 0.9) 0%, rgba(69, 123, 157, 0.7) 100%);
+    border: 3px solid var(--ui-brd);
+    padding: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.class-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.class-card:hover::before {
+    left: 100%;
+}
+
+.class-card:hover {
+    transform: translateY(-10px) scale(1.05);
+    border-color: var(--gold);
+    box-shadow:
+        0 12px 30px rgba(0, 0, 0, 0.7),
+        0 0 40px rgba(255, 183, 3, 0.4),
+        inset 0 0 30px rgba(255, 183, 3, 0.1);
+}
+
+.class-card[data-class="WARRIOR"]:hover {
+    border-color: #e63946;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 40px rgba(230, 57, 70, 0.6);
+}
+
+.class-card[data-class="ROGUE"]:hover {
+    border-color: #b185db;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 40px rgba(177, 133, 219, 0.6);
+}
+
+.class-card[data-class="MAGE"]:hover {
+    border-color: #1e90ff;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 40px rgba(30, 144, 255, 0.6);
+}
+
+.class-card[data-class="PALADIN"]:hover {
+    border-color: #ffb703;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 40px rgba(255, 183, 3, 0.6);
+}
+
+.class-icon {
+    font-size: 64px;
+    text-align: center;
+    margin-bottom: 15px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+}
+
+.class-name {
+    font-size: 18px;
+    text-align: center;
+    color: var(--gold);
+    margin-bottom: 12px;
+    letter-spacing: 2px;
+}
+
+.class-desc {
+    font-size: 9px;
+    text-align: center;
+    color: #bde0fe;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.class-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.stat-item {
+    font-size: 10px;
+    color: #a8dadc;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 6px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.class-select-hint {
+    margin-top: 30px;
+    font-size: 11px;
+    color: #8ecae6;
+    text-shadow: 0 0 10px rgba(142, 202, 230, 0.5);
+    animation: hint-blink 1.5s ease-in-out infinite;
+}
+
+@keyframes hint-blink {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Responsive Class Selection */
+@media (max-width: 768px) {
+    .class-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .class-select-title {
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+
+    .class-card {
+        padding: 15px;
+    }
+
+    .class-icon {
+        font-size: 48px;
+    }
+
+    .class-name {
+        font-size: 14px;
+    }
+
+    .class-desc {
+        font-size: 8px;
+    }
+
+    .stat-item {
+        font-size: 8px;
+    }
+}
+
+/* ==========================================
+   SKILL BAR (Diablo-style)
+   ========================================== */
+
+.skill-bar {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    pointer-events: none;
+    z-index: 30;
+}
+
+.skill-slot {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, rgba(29, 53, 87, 0.95) 0%, rgba(20, 30, 40, 0.95) 100%);
+    border: 2px solid var(--ui-brd);
+    border-radius: 8px;
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.6),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+}
+
+.skill-slot:hover {
+    transform: translateY(-4px);
+    border-color: var(--gold);
+    box-shadow:
+        0 6px 16px rgba(0, 0, 0, 0.8),
+        0 0 20px rgba(255, 183, 3, 0.4);
+}
+
+.skill-slot.on-cooldown {
+    opacity: 0.5;
+    filter: grayscale(0.5);
+}
+
+.skill-slot.active {
+    border-color: var(--accent);
+    box-shadow:
+        0 6px 16px rgba(0, 0, 0, 0.8),
+        0 0 30px rgba(255, 0, 110, 0.8);
+    animation: skill-pulse 0.3s ease-out;
+}
+
+@keyframes skill-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.skill-icon {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--gold);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.skill-name {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    color: #8ecae6;
+    white-space: nowrap;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+    pointer-events: none;
+}
+
+.skill-cooldown {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 6px;
+    transition: height 0.1s linear;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+}
+
+.skill-hotkey {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 20px;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid var(--ui-brd);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    color: var(--gold);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+/* Skill-specific colors */
+.skill-slot[data-key="1"] .skill-icon {
+    color: #e63946; /* Red - Primary attack skill */
+}
+
+.skill-slot[data-key="2"] .skill-icon {
+    color: #1e90ff; /* Blue - Utility/defensive */
+}
+
+.skill-slot[data-key="3"] .skill-icon {
+    color: #57cc99; /* Green - Movement/mobility */
+}
+
+.skill-slot[data-key="4"] .skill-icon {
+    color: #b185db; /* Purple - Ultimate/powerful */
+}
+
+/* Responsive Skill Bar */
+@media (max-width: 768px) {
+    .skill-bar {
+        bottom: 90px;
+        gap: 8px;
+    }
+
+    .skill-slot {
+        width: 50px;
+        height: 50px;
+    }
+
+    .skill-icon {
+        font-size: 24px;
+    }
+
+    .skill-name {
+        font-size: 7px;
+        bottom: -18px;
+    }
+
+    .skill-hotkey {
+        width: 18px;
+        height: 18px;
+        font-size: 9px;
+    }
+}

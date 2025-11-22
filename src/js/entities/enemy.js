@@ -7,6 +7,8 @@ import { Entity } from './entity.js';
 import { CFG } from '../config.js';
 import { audioSystem } from '../audio.js';
 import { Loot } from './loot.js';
+import { Corpse } from './corpse.js';
+import { BloodStain } from './bloodstain.js';
 import { Particle, FloatingText } from '../particles/particles.js';
 
 export class Enemy extends Entity {
@@ -98,17 +100,42 @@ export class Enemy extends Entity {
 
         this.dead = true;
 
+        // Create corpse
+        game.corpses.push(new Corpse(this.x, this.y, this.spriteKey));
+
+        // Create blood stain
+        if (CFG.GORE_ENABLED) {
+            game.bloodStains.push(new BloodStain(this.x + 16, this.y + 16, 1.2));
+
+            // Gore particles (blood spray)
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * Math.PI * 2;
+                const speed = 50 + Math.random() * 100;
+                game.particles.push(new Particle(
+                    this.x + 16,
+                    this.y + 16,
+                    '#8B0000',  // Dark blood red
+                    speed * Math.cos(angle),
+                    speed * Math.sin(angle)
+                ));
+            }
+        }
+
         // Drop loot
         game.entities.push(new Loot(this.x, this.y));
 
-        // Skeleton-specific: Hot orange explosion particles for impact
-        for (let i = 0; i < 15; i++) {
+        // Skeleton-specific: Bone particles
+        for (let i = 0; i < 8; i++) {
             game.particles.push(new Particle(
                 this.x + 16,
                 this.y + 16,
-                i % 3 === 0 ? '#ffaa00' : '#ff6600'  // Hot orange/red
+                i % 2 === 0 ? '#f5f5f0' : '#e1e5f2'  // Bone white
             ));
         }
+
+        // Enhanced screen shake
+        game.freeze(CFG.HIT_STOP_DURATION);
+        game.addShake(0.8, 0, 0, false);
 
         // Update quest progress
         if (game.quest) {

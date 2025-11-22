@@ -7,6 +7,8 @@ import { Enemy } from './enemy.js';
 import { CFG } from '../config.js';
 import { Particle } from '../particles/particles.js';
 import { Loot } from './loot.js';
+import { Corpse } from './corpse.js';
+import { BloodStain } from './bloodstain.js';
 
 export class Wraith extends Enemy {
     constructor(x, y) {
@@ -111,17 +113,33 @@ export class Wraith extends Enemy {
 
         this.dead = true;
 
+        // Create wraith corpse (ethereal remains)
+        game.corpses.push(new Corpse(this.x, this.y, this.spriteKey));
+
+        // Wraiths leave purple ethereal stains instead of blood
+        if (CFG.GORE_ENABLED) {
+            game.bloodStains.push(new BloodStain(this.x + 16, this.y + 16, 1.5));
+        }
+
         // Drop loot
         game.entities.push(new Loot(this.x, this.y));
 
         // Vibrant magenta/purple mist explosion
-        for (let i = 0; i < 18; i++) {
+        for (let i = 0; i < 20; i++) {
+            const angle = (i / 20) * Math.PI * 2;
+            const speed = 80 + Math.random() * 120;
             game.particles.push(new Particle(
                 this.x + 16,
                 this.y + 16,
-                i % 2 === 0 ? '#ff006e' : '#b185db'  // Hot pink and purple
+                i % 2 === 0 ? '#ff006e' : '#b185db',  // Hot pink and purple
+                speed * Math.cos(angle),
+                speed * Math.sin(angle)
             ));
         }
+
+        // Enhanced effects
+        game.freeze(CFG.HIT_STOP_DURATION * 1.2);
+        game.addShake(0.6, 0, 0, false);
 
         // Update quest progress
         if (game.quest) {

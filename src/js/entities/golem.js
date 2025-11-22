@@ -7,6 +7,8 @@ import { Enemy } from './enemy.js';
 import { CFG } from '../config.js';
 import { Particle } from '../particles/particles.js';
 import { Loot } from './loot.js';
+import { Corpse } from './corpse.js';
+import { BloodStain } from './bloodstain.js';
 
 export class Golem extends Enemy {
     constructor(x, y) {
@@ -112,17 +114,43 @@ export class Golem extends Enemy {
 
         this.dead = true;
 
+        // Create golem corpse (rubble)
+        game.corpses.push(new Corpse(this.x, this.y, this.spriteKey));
+
+        // Golems don't bleed, but leave scorch marks
+        if (CFG.GORE_ENABLED) {
+            // Create multiple small scorch marks from core explosion
+            for (let i = 0; i < 3; i++) {
+                const angle = (i / 3) * Math.PI * 2;
+                const dist = 10 + Math.random() * 15;
+                game.bloodStains.push(new BloodStain(
+                    this.x + 20 + Math.cos(angle) * dist,
+                    this.y + 20 + Math.sin(angle) * dist,
+                    0.8
+                ));
+            }
+        }
+
         // Drop loot
         game.entities.push(new Loot(this.x, this.y));
 
-        // Hot orange core explosion with rock debris
-        for (let i = 0; i < 20; i++) {
+        // Hot orange core explosion with rock debris (larger explosion)
+        for (let i = 0; i < 25; i++) {
+            const angle = (i / 25) * Math.PI * 2;
+            const speed = 100 + Math.random() * 150;
             game.particles.push(new Particle(
                 this.x + 20,
                 this.y + 20,
-                ['#ffaa00', '#ff6600', '#ff8800'][i % 3]  // Hot orange explosion
+                ['#ffaa00', '#ff6600', '#ff8800', '#667788'][i % 4],  // Orange and gray
+                speed * Math.cos(angle),
+                speed * Math.sin(angle)
             ));
         }
+
+        // Massive screen shake (golem is huge!)
+        game.freeze(CFG.HIT_STOP_DURATION * 1.5);
+        game.addShake(1.2, 0, 0, true);  // Add rotation shake
+        game.addFlash(0.6);
 
         // Update quest progress
         if (game.quest) {
