@@ -48,9 +48,9 @@ export class Renderer3D {
 
         console.log('[Renderer3D] Starting initialization...');
 
-        // Create scene with much lighter background for high visibility
+        // Create scene with BRIGHT background - nearly white
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x2a2a40); // Much lighter blue-grey
+        this.scene.background = new THREE.Color(0x505060); // Very light grey
 
         // Setup isometric orthographic camera (Diablo-style)
         const aspect = CFG.W / CFG.H;
@@ -82,12 +82,11 @@ export class Renderer3D {
         this.renderer.setSize(CFG.W, CFG.H, false); // false = don't update style
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap at 2x for performance
 
-        // Enable shadows for dramatic lighting
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        // DISABLE shadows completely for maximum brightness
+        this.renderer.shadowMap.enabled = false;
 
-        // Minimal fog - almost completely removed for maximum visibility
-        this.scene.fog = new THREE.FogExp2(0x1a1a30, 0.005); // Extremely light fog
+        // COMPLETELY REMOVE FOG
+        this.scene.fog = null; // No fog at all
 
         // Initialize materials
         this.initMaterials();
@@ -111,20 +110,24 @@ export class Renderer3D {
      * Initialize materials for different surface types
      */
     initMaterials() {
-        // Floor material - MUCH lighter stone for visibility
+        // Floor material - VERY BRIGHT, almost white
         this.materials.floor = new THREE.MeshStandardMaterial({
-            color: 0x4a5a4a, // Much lighter green-grey
-            roughness: 0.8,
-            metalness: 0.15,
-            flatShading: false
+            color: 0x8a9a8a, // Very light green-grey
+            roughness: 0.5,
+            metalness: 0.3,
+            flatShading: false,
+            emissive: 0x3a4a3a, // Self-illuminating
+            emissiveIntensity: 0.3
         });
 
-        // Wall material - lighter stone with high contrast
+        // Wall material - VERY BRIGHT with emissive glow
         this.materials.wall = new THREE.MeshStandardMaterial({
-            color: 0x3a4a3a, // Much lighter
-            roughness: 0.85,
-            metalness: 0.1,
-            flatShading: false
+            color: 0x7a8a7a, // Much lighter
+            roughness: 0.6,
+            metalness: 0.2,
+            flatShading: false,
+            emissive: 0x2a3a2a, // Self-illuminating
+            emissiveIntensity: 0.4
         });
 
         // Player material - BRIGHT blue armor with strong glow
@@ -177,27 +180,30 @@ export class Renderer3D {
      * Setup dramatic Diablo-style lighting
      */
     setupLighting() {
-        // VERY BRIGHT ambient light - full daylight visibility
-        this.lights.ambient = new THREE.AmbientLight(0xa0a0b0, 1.2); // Dramatically increased
+        // EXTREME DAYLIGHT - brighter than noon sun
+        this.lights.ambient = new THREE.AmbientLight(0xffffff, 2.5); // EXTREME brightness
         this.scene.add(this.lights.ambient);
 
-        // MASSIVE player torch - like a floodlight
-        this.lights.player = new THREE.PointLight(0xffcc77, 25, 80, 1.0); // Huge intensity and radius
-        this.lights.player.position.set(0, 8, 0); // Raised higher for better coverage
-        this.lights.player.castShadow = true;
-
-        // Shadow quality settings
-        this.lights.player.shadow.mapSize.width = 1024;
-        this.lights.player.shadow.mapSize.height = 1024;
-        this.lights.player.shadow.camera.near = 0.5;
-        this.lights.player.shadow.camera.far = 80;
+        // SPOTLIGHT on player - extremely bright
+        this.lights.player = new THREE.PointLight(0xffffff, 50, 100, 0.5); // Maximum intensity
+        this.lights.player.position.set(0, 10, 0); // High up for maximum coverage
+        this.lights.player.castShadow = false; // DISABLE shadows for flat lighting
 
         this.scene.add(this.lights.player);
 
-        // VERY STRONG rim light from above - like sunlight
-        const rimLight = new THREE.DirectionalLight(0xbbccdd, 1.5); // Massive increase
+        // MASSIVE directional light - like stadium floodlights
+        const rimLight = new THREE.DirectionalLight(0xffffff, 2.0); // Maximum brightness
         rimLight.position.set(5, 20, 5);
         this.scene.add(rimLight);
+
+        // ADDITIONAL fill lights from all directions
+        const fillLight1 = new THREE.DirectionalLight(0xffffff, 1.0);
+        fillLight1.position.set(-5, 10, 5);
+        this.scene.add(fillLight1);
+
+        const fillLight2 = new THREE.DirectionalLight(0xffffff, 1.0);
+        fillLight2.position.set(5, 10, -5);
+        this.scene.add(fillLight2);
 
         console.log('[Renderer3D] Lighting setup complete:');
         console.log(`- Ambient: ${this.lights.ambient.intensity}`);
@@ -468,10 +474,9 @@ export class Renderer3D {
             this.updateParticles(game.particles);
         }
 
-        // Very subtle flicker - keep lighting stable and bright
+        // NO FLICKER - completely stable maximum brightness
         if (this.lights.player) {
-            const flicker = 1 + Math.sin(Date.now() * 0.003) * 0.03; // Minimal flicker
-            this.lights.player.intensity = 25 * flicker; // Base intensity is now 25
+            this.lights.player.intensity = 50; // Constant maximum intensity
         }
 
         // Render the scene
