@@ -293,12 +293,8 @@ export class Game {
      * @param {number} cameraY - Camera Y position
      */
     drawLighting(cameraX, cameraY) {
-        // Clear lighting canvas
+        // Clear lighting canvas (transparent, not black!)
         this.lightCtx.clearRect(0, 0, CFG.W, CFG.H);
-
-        // Fill with pure darkness as base for lights to pop
-        this.lightCtx.fillStyle = '#000000';
-        this.lightCtx.fillRect(0, 0, CFG.W, CFG.H);
 
         // Use additive blending for overlapping lights to get brighter
         this.lightCtx.globalCompositeOperation = 'lighter';
@@ -309,8 +305,8 @@ export class Game {
             this.player.x - cameraX + 16,
             this.player.y - cameraY + 16,
             CFG.PLAYER_LIGHT_RADIUS * playerFlicker,
-            'rgba(0, 150, 255, 1)',      // Bright cyan center
-            'rgba(100, 200, 255, 0.3)',  // Soft blue edge
+            'rgba(0, 150, 255, 0.6)',      // Bright cyan center
+            'rgba(100, 200, 255, 0.2)',    // Soft blue edge
             true  // Add extra intensity
         );
 
@@ -322,8 +318,8 @@ export class Game {
                     entity.x - cameraX + 8,
                     entity.y - cameraY + 8,
                     CFG.LOOT_LIGHT_RADIUS * lootFlicker,
-                    'rgba(255, 170, 0, 1)',    // Hot orange center
-                    'rgba(255, 200, 50, 0.4)', // Golden edge
+                    'rgba(255, 170, 0, 0.8)',    // Hot orange center
+                    'rgba(255, 200, 50, 0.3)',   // Golden edge
                     true
                 );
             }
@@ -339,8 +335,8 @@ export class Game {
                     entity.x - cameraX + 16,
                     entity.y - cameraY + 16,
                     50 * enemyFlicker,
-                    'rgba(230, 57, 70, 0.8)',  // Red eyes
-                    'rgba(255, 100, 100, 0.2)',
+                    'rgba(230, 57, 70, 0.5)',    // Red eyes
+                    'rgba(255, 100, 100, 0.15)',
                     false
                 );
             } else if (entity.spriteKey === 'wraith') {
@@ -349,8 +345,8 @@ export class Game {
                     entity.x - cameraX + 16,
                     entity.y - cameraY + 16,
                     60 * enemyFlicker,
-                    'rgba(255, 0, 110, 0.9)',   // Neon pink
-                    'rgba(177, 133, 219, 0.3)', // Purple edge
+                    'rgba(255, 0, 110, 0.6)',     // Neon pink
+                    'rgba(177, 133, 219, 0.2)',   // Purple edge
                     false
                 );
             } else if (entity.spriteKey === 'golem') {
@@ -359,36 +355,38 @@ export class Game {
                     entity.x - cameraX + 16,
                     entity.y - cameraY + 16,
                     55 * enemyFlicker,
-                    'rgba(247, 127, 0, 0.9)',  // Bright orange
-                    'rgba(255, 150, 50, 0.3)',
+                    'rgba(247, 127, 0, 0.6)',     // Bright orange
+                    'rgba(255, 150, 50, 0.2)',
                     false
                 );
             }
         });
 
-        // Apply the bloom effect with blur (drawn twice for intensity)
+        // Apply the bloom glow effect as an ADDITIVE layer over the game
         this.ctx.save();
-
-        // First pass: Blurred glow
-        this.ctx.filter = 'blur(12px)';
         this.ctx.globalCompositeOperation = 'screen';  // Screen blend for glow
+
+        // First pass: Heavy blur for outer glow
+        this.ctx.filter = 'blur(16px)';
+        this.ctx.globalAlpha = 0.8;
         this.ctx.drawImage(this.lightCanvas, 0, 0);
 
-        // Second pass: Sharp center without blur for core brightness
-        this.ctx.filter = 'blur(4px)';  // Slight blur for soft edge
+        // Second pass: Medium blur for mid glow
+        this.ctx.filter = 'blur(8px)';
+        this.ctx.globalAlpha = 0.9;
         this.ctx.drawImage(this.lightCanvas, 0, 0);
 
-        // Third pass: No blur for sharp intensity
-        this.ctx.filter = 'none';
-        this.ctx.globalAlpha = 0.7;  // Slightly transparent for balance
+        // Third pass: Light blur for sharp core
+        this.ctx.filter = 'blur(3px)';
+        this.ctx.globalAlpha = 1;
         this.ctx.drawImage(this.lightCanvas, 0, 0);
 
         this.ctx.restore();
 
-        // Apply dusk overlay on top with reduced opacity for atmosphere
+        // Apply darkness overlay on top
         this.ctx.globalCompositeOperation = 'source-over';
-        const overlayAlpha = CFG.LIGHT_OPACITY * 0.4;  // Reduced for brighter scene
-        this.ctx.fillStyle = `rgba(20, 25, 60, ${overlayAlpha})`;
+        const overlayAlpha = CFG.LIGHT_OPACITY * 0.5;
+        this.ctx.fillStyle = `rgba(15, 20, 45, ${overlayAlpha})`;
         this.ctx.fillRect(0, 0, CFG.W, CFG.H);
     }
 
