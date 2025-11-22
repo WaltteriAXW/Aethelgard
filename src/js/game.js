@@ -277,8 +277,8 @@ export class Game {
 
         this.ctx.restore();
 
-        // TEMPORARILY DISABLED: Draw lighting overlay
-        // this.drawLighting(cameraX, cameraY);
+        // Draw subtle atmospheric lighting
+        this.drawAtmosphericLighting(cameraX, cameraY);
 
         // Draw minimap
         this.drawMinimap();
@@ -288,7 +288,108 @@ export class Game {
     }
 
     /**
-     * Draw lighting layer with bloom/glow effects
+     * Draw subtle atmospheric lighting for ambiance
+     * @param {number} cameraX - Camera X position
+     * @param {number} cameraY - Camera Y position
+     */
+    drawAtmosphericLighting(cameraX, cameraY) {
+        // Clear lighting canvas
+        this.lightCtx.clearRect(0, 0, CFG.W, CFG.H);
+        this.lightCtx.globalCompositeOperation = 'lighter';
+
+        // Subtle player aura (very soft glow)
+        const playerFlicker = 1 + Math.sin(this.lightFlicker) * 0.05;
+        const playerGradient = this.lightCtx.createRadialGradient(
+            this.player.x - cameraX + 16,
+            this.player.y - cameraY + 16,
+            0,
+            this.player.x - cameraX + 16,
+            this.player.y - cameraY + 16,
+            80 * playerFlicker
+        );
+        playerGradient.addColorStop(0, 'rgba(100, 150, 255, 0.15)');
+        playerGradient.addColorStop(0.5, 'rgba(70, 120, 200, 0.08)');
+        playerGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        this.lightCtx.fillStyle = playerGradient;
+        this.lightCtx.fillRect(0, 0, CFG.W, CFG.H);
+
+        // Gentle loot glow
+        this.entities.forEach(entity => {
+            if (entity.spriteKey === 'orb') {
+                const lootFlicker = 1 + Math.sin(this.lightFlicker * 2 + entity.x) * 0.12;
+                const lootGradient = this.lightCtx.createRadialGradient(
+                    entity.x - cameraX + 8,
+                    entity.y - cameraY + 8,
+                    0,
+                    entity.x - cameraX + 8,
+                    entity.y - cameraY + 8,
+                    60 * lootFlicker
+                );
+                lootGradient.addColorStop(0, 'rgba(255, 200, 80, 0.25)');
+                lootGradient.addColorStop(0.5, 'rgba(255, 180, 60, 0.12)');
+                lootGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                this.lightCtx.fillStyle = lootGradient;
+                this.lightCtx.fillRect(0, 0, CFG.W, CFG.H);
+            }
+        });
+
+        // Enemy glows (very subtle)
+        this.entities.forEach(entity => {
+            const enemyFlicker = 1 + Math.sin(this.lightFlicker * 1.5 + entity.y) * 0.08;
+
+            if (entity.spriteKey === 'skel') {
+                const skelGradient = this.lightCtx.createRadialGradient(
+                    entity.x - cameraX + 16,
+                    entity.y - cameraY + 16,
+                    0,
+                    entity.x - cameraX + 16,
+                    entity.y - cameraY + 16,
+                    40 * enemyFlicker
+                );
+                skelGradient.addColorStop(0, 'rgba(255, 80, 80, 0.15)');
+                skelGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                this.lightCtx.fillStyle = skelGradient;
+                this.lightCtx.fillRect(0, 0, CFG.W, CFG.H);
+            } else if (entity.spriteKey === 'wraith') {
+                const wraithGradient = this.lightCtx.createRadialGradient(
+                    entity.x - cameraX + 16,
+                    entity.y - cameraY + 16,
+                    0,
+                    entity.x - cameraX + 16,
+                    entity.y - cameraY + 16,
+                    50 * enemyFlicker
+                );
+                wraithGradient.addColorStop(0, 'rgba(180, 100, 220, 0.18)');
+                wraithGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                this.lightCtx.fillStyle = wraithGradient;
+                this.lightCtx.fillRect(0, 0, CFG.W, CFG.H);
+            } else if (entity.spriteKey === 'golem') {
+                const golemGradient = this.lightCtx.createRadialGradient(
+                    entity.x - cameraX + 16,
+                    entity.y - cameraY + 16,
+                    0,
+                    entity.x - cameraX + 16,
+                    entity.y - cameraY + 16,
+                    45 * enemyFlicker
+                );
+                golemGradient.addColorStop(0, 'rgba(255, 150, 60, 0.2)');
+                golemGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                this.lightCtx.fillStyle = golemGradient;
+                this.lightCtx.fillRect(0, 0, CFG.W, CFG.H);
+            }
+        });
+
+        // Composite lighting layer with very subtle blur
+        this.ctx.save();
+        this.ctx.globalCompositeOperation = 'lighter';
+        this.ctx.filter = 'blur(8px)';
+        this.ctx.globalAlpha = 0.7;
+        this.ctx.drawImage(this.lightCanvas, 0, 0);
+        this.ctx.restore();
+    }
+
+    /**
+     * Draw lighting layer with bloom/glow effects (OLD - for reference)
      * @param {number} cameraX - Camera X position
      * @param {number} cameraY - Camera Y position
      */
@@ -434,11 +535,11 @@ export class Game {
         const mmSize = 150; // Minimap size in pixels
         const scale = mmSize / Math.max(this.map.width, this.map.height);
 
-        // Clear minimap
-        this.minimapCtx.fillStyle = '#1a1c23';
+        // Clear minimap with dark background
+        this.minimapCtx.fillStyle = '#1a1c1a';
         this.minimapCtx.fillRect(0, 0, mmSize, mmSize);
 
-        // Draw map tiles
+        // Draw map tiles with natural green tones
         for (let y = 0; y < this.map.height; y++) {
             for (let x = 0; x < this.map.width; x++) {
                 const tile = this.map.get(x, y);
@@ -447,10 +548,10 @@ export class Game {
                 const tileSize = Math.max(1, Math.ceil(scale));
 
                 if (tile === this.map.TILE_FLOOR) {
-                    this.minimapCtx.fillStyle = '#3e3e5a';  // Cool purple floor
+                    this.minimapCtx.fillStyle = '#6b8a5f';  // Moss green floor
                     this.minimapCtx.fillRect(mmX, mmY, tileSize, tileSize);
                 } else if (tile === this.map.TILE_WALL) {
-                    this.minimapCtx.fillStyle = '#2a2a3e';  // Dark blue wall
+                    this.minimapCtx.fillStyle = '#4a5a3d';  // Dark moss wall
                     this.minimapCtx.fillRect(mmX, mmY, tileSize, tileSize);
                 }
             }

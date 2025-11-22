@@ -226,7 +226,7 @@ export class MapSystem {
     }
 
     /**
-     * Draw the map
+     * Draw the map with modern, gradient-based graphics
      * @param {CanvasRenderingContext2D} ctx - Canvas context
      * @param {Object} camera - Camera position {x, y}
      */
@@ -245,58 +245,111 @@ export class MapSystem {
                 const pixelX = Math.floor(x * tileSize - camera.x);
                 const pixelY = Math.floor(y * tileSize - camera.y);
 
-                // Draw shadow below walls
+                // Draw shadow below walls for depth
                 if (tileType === this.TILE_WALL) {
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                    ctx.fillRect(pixelX, pixelY + tileSize, tileSize, tileSize / 2);
+                    const shadowGradient = ctx.createRadialGradient(
+                        pixelX + tileSize / 2, pixelY + tileSize,
+                        0,
+                        pixelX + tileSize / 2, pixelY + tileSize,
+                        tileSize
+                    );
+                    shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.5)');
+                    shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                    ctx.fillStyle = shadowGradient;
+                    ctx.fillRect(pixelX - 8, pixelY + tileSize - 4, tileSize + 16, 16);
                 }
 
-                // Draw tile
+                // Draw tile with modern rendering
                 if (tileType === this.TILE_FLOOR) {
-                    // Cool blue/purple dungeon floor with checkerboard pattern
-                    ctx.fillStyle = ((x + y) % 2) ? '#2a2a3e' : '#252538';
+                    // Beautiful stone floor with gradient depth
+                    const baseColor1 = '#7a9b6e'; // Warm moss green
+                    const baseColor2 = '#6b8a5f'; // Slightly darker green
+
+                    // Checkerboard pattern for visual variety
+                    const isLight = (x + y) % 2;
+                    ctx.fillStyle = isLight ? baseColor1 : baseColor2;
                     ctx.fillRect(pixelX, pixelY, tileSize, tileSize);
 
-                    // Add varied details for more visual interest
+                    // Add subtle gradient for depth perception
+                    const floorGradient = ctx.createLinearGradient(
+                        pixelX, pixelY,
+                        pixelX + tileSize, pixelY + tileSize
+                    );
+                    floorGradient.addColorStop(0, 'rgba(255, 255, 255, 0.08)');
+                    floorGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.05)');
+                    floorGradient.addColorStop(1, 'rgba(0, 0, 0, 0.12)');
+                    ctx.fillStyle = floorGradient;
+                    ctx.fillRect(pixelX, pixelY, tileSize, tileSize);
+
+                    // Procedural details for texture
                     const detailSeed = x * 17 + y * 13;
 
-                    // Stone cracks/tiles
+                    // Stone tiles/cracks
                     if (detailSeed % 5 === 0) {
-                        ctx.fillStyle = '#3e3e5a';
-                        ctx.fillRect(pixelX + (detailSeed % 30), pixelY + (detailSeed % 35), 3, 4);
-                        ctx.fillRect(pixelX + (detailSeed % 30) + 3, pixelY + (detailSeed % 35), 3, 3);
+                        ctx.fillStyle = 'rgba(90, 110, 80, 0.3)';
+                        const crackX = pixelX + (detailSeed % 30);
+                        const crackY = pixelY + (detailSeed % 35);
+                        ctx.fillRect(crackX, crackY, 3, 1);
+                        ctx.fillRect(crackX + 2, crackY + 1, 1, 3);
                     }
 
-                    // Small stones/debris
+                    // Small pebbles
                     if (detailSeed % 11 === 0) {
-                        ctx.fillStyle = '#1a1a28';
+                        ctx.fillStyle = 'rgba(50, 60, 45, 0.4)';
                         ctx.fillRect(pixelX + (detailSeed % 40), pixelY + (detailSeed % 40), 2, 2);
                     }
 
-                    // Darker spots (aged stone)
+                    // Darker patches for organic look
                     if (detailSeed % 13 === 0) {
-                        ctx.fillStyle = 'rgba(30, 30, 50, 0.4)';
-                        ctx.fillRect(pixelX + (detailSeed % 25), pixelY + (detailSeed % 25), 8, 8);
+                        ctx.fillStyle = 'rgba(40, 50, 35, 0.2)';
+                        ctx.fillRect(pixelX + (detailSeed % 25), pixelY + (detailSeed % 25), 6, 6);
                     }
 
-                    // Edge darkening for depth
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-                    ctx.fillRect(pixelX, pixelY, tileSize, 2);
-                    ctx.fillRect(pixelX, pixelY, 2, tileSize);
+                    // Subtle edge highlighting
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                    ctx.fillRect(pixelX, pixelY, tileSize, 1);
+                    ctx.fillRect(pixelX, pixelY, 1, tileSize);
 
                 } else if (tileType === this.TILE_WALL) {
-                    // Cool purple/blue stone wall
-                    ctx.fillStyle = '#3e3e5a'; // Cool purple top
+                    // Professional 3D wall with gradient lighting
+
+                    // Main wall body with gradient
+                    const wallGradient = ctx.createLinearGradient(
+                        pixelX, pixelY,
+                        pixelX, pixelY + tileSize
+                    );
+                    wallGradient.addColorStop(0, '#6d7c5d'); // Lighter mossy top
+                    wallGradient.addColorStop(0.3, '#5a6b4d'); // Mid tone
+                    wallGradient.addColorStop(1, '#4a5a3d'); // Darker bottom
+                    ctx.fillStyle = wallGradient;
                     ctx.fillRect(pixelX, pixelY, tileSize, tileSize);
 
-                    // Darker face for 3D effect
-                    ctx.fillStyle = '#2a2a3e';
-                    ctx.fillRect(pixelX, pixelY + tileSize - 12, tileSize, 12);
+                    // 3D face/front edge
+                    const faceGradient = ctx.createLinearGradient(
+                        pixelX, pixelY + tileSize - 16,
+                        pixelX, pixelY + tileSize
+                    );
+                    faceGradient.addColorStop(0, '#4a5a3d');
+                    faceGradient.addColorStop(1, '#3a4a2d');
+                    ctx.fillStyle = faceGradient;
+                    ctx.fillRect(pixelX, pixelY + tileSize - 16, tileSize, 16);
 
-                    // Add cracks and wear
+                    // Highlight on top edge for realism
+                    const highlightGradient = ctx.createLinearGradient(
+                        pixelX, pixelY,
+                        pixelX, pixelY + 8
+                    );
+                    highlightGradient.addColorStop(0, 'rgba(200, 220, 180, 0.3)');
+                    highlightGradient.addColorStop(1, 'rgba(200, 220, 180, 0)');
+                    ctx.fillStyle = highlightGradient;
+                    ctx.fillRect(pixelX, pixelY, tileSize, 8);
+
+                    // Procedural wall details
                     const crackSeed = x * 23 + y * 19;
+
+                    // Cracks and wear
                     if (crackSeed % 7 === 0) {
-                        ctx.strokeStyle = '#2a3a10';
+                        ctx.strokeStyle = 'rgba(30, 40, 25, 0.5)';
                         ctx.lineWidth = 1;
                         ctx.beginPath();
                         ctx.moveTo(pixelX + (crackSeed % 20), pixelY + (crackSeed % 30));
@@ -304,16 +357,24 @@ export class MapSystem {
                         ctx.stroke();
                     }
 
-                    // Moss patches
+                    // Moss patches with gradient
                     if (crackSeed % 9 === 0) {
-                        ctx.fillStyle = '#4a5b1f';
-                        ctx.fillRect(pixelX + (crackSeed % 35), pixelY + (crackSeed % 35), 4, 3);
+                        const mossX = pixelX + (crackSeed % 35);
+                        const mossY = pixelY + (crackSeed % 35);
+                        const mossGradient = ctx.createRadialGradient(
+                            mossX + 2, mossY + 2, 0,
+                            mossX + 2, mossY + 2, 4
+                        );
+                        mossGradient.addColorStop(0, 'rgba(80, 100, 50, 0.6)');
+                        mossGradient.addColorStop(1, 'rgba(60, 80, 40, 0.2)');
+                        ctx.fillStyle = mossGradient;
+                        ctx.fillRect(mossX, mossY, 4, 4);
                     }
 
-                    // Highlight edge for definition
-                    ctx.fillStyle = 'rgba(100, 120, 60, 0.3)';
-                    ctx.fillRect(pixelX, pixelY, tileSize, 1);
-                    ctx.fillRect(pixelX, pixelY, 1, tileSize);
+                    // Sharp edge definition
+                    ctx.strokeStyle = 'rgba(100, 120, 80, 0.4)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(pixelX + 0.5, pixelY + 0.5, tileSize - 1, tileSize - 1);
                 }
             }
         }
