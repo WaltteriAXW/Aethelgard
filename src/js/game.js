@@ -52,10 +52,15 @@ export class Game {
         graphics.generate();
         input.init();
 
-        // Remove start overlay
+        // Remove all overlays
         const startOverlay = document.getElementById('start-overlay');
         if (startOverlay) {
             startOverlay.remove();
+        }
+
+        const classSelection = document.getElementById('class-selection');
+        if (classSelection) {
+            classSelection.remove();
         }
 
         // Show mobile controls if on touch device
