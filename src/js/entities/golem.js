@@ -5,6 +5,8 @@
 
 import { Enemy } from './enemy.js';
 import { CFG } from '../config.js';
+import { Particle } from '../particles/particles.js';
+import { Loot } from './loot.js';
 
 export class Golem extends Enemy {
     constructor(x, y) {
@@ -51,9 +53,12 @@ export class Golem extends Enemy {
                 player.takeDamage(this.damage);
                 this.attackTimer = this.attackCooldown;
 
-                // Screen shake on golem hit
-                if (game.camera) {
-                    game.camera.shake = 1.5;
+                // Heavy directional screen shake with rotation on golem hit
+                if (game.addShake) {
+                    const dx = player.x - this.x;
+                    const dy = player.y - this.y;
+                    const len = Math.hypot(dx, dy);
+                    game.addShake(1.5, dx / len, dy / len, true);
                 }
             }
         }
@@ -76,15 +81,52 @@ export class Golem extends Enemy {
     }
 
     /**
-     * Golem takes less knockback
+     * Golem takes less knockback and spawns rock debris
      * @param {number} damage - Damage amount
      * @param {number} direction - Knockback direction
      */
     hit(damage, direction) {
+        const game = window.game;
+
         // Just call parent hit method but with adjusted knockback
         super.hit(damage, direction);
 
         // Override knockback to be less
         this.vx = this.vx * 0.5; // Half the knockback
+
+        // Spawn rock debris on hit
+        for (let i = 0; i < 3; i++) {
+            game.particles.push(new Particle(
+                this.x + 20 + (Math.random() - 0.5) * 20,
+                this.y + 20 + (Math.random() - 0.5) * 20,
+                i % 2 === 0 ? '#52796f' : '#84a98c'
+            ));
+        }
+    }
+
+    /**
+     * Override die to add rock explosion
+     */
+    die() {
+        const game = window.game;
+
+        this.dead = true;
+
+        // Drop loot
+        game.entities.push(new Loot(this.x, this.y));
+
+        // Rock debris explosion
+        for (let i = 0; i < 15; i++) {
+            game.particles.push(new Particle(
+                this.x + 20,
+                this.y + 20,
+                ['#2f3e46', '#52796f', '#84a98c'][i % 3]
+            ));
+        }
+
+        // Update quest progress
+        if (game.quest) {
+            game.quest.progress();
+        }
     }
 }

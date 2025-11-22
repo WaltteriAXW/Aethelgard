@@ -301,3 +301,133 @@ canvas {
 .loading {
     animation: pulse 1.5s ease-in-out infinite;
 }
+
+/* HP Bar Glow (Low Health) */
+@keyframes hp-glow {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(230, 57, 70, 0.8), inset 0 0 10px rgba(255, 0, 0, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(230, 57, 70, 1), inset 0 0 15px rgba(255, 0, 0, 0.8);
+    }
+}
+
+.bar-wrap.low-hp {
+    animation: hp-glow 1s ease-in-out infinite;
+}
+
+/* XP Bar Shimmer */
+@keyframes xp-shimmer {
+    0% {
+        background-position: -100% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.bar-fill.xp {
+    background: linear-gradient(90deg, var(--gold) 0%, #ffd700 50%, #ffed4e 55%, #ffd700 60%, var(--gold) 100%);
+    background-size: 200% 100%;
+    animation: xp-shimmer 2s linear infinite;
+}
+
+/* Level Up Glow */
+@keyframes level-glow {
+    0% {
+        text-shadow: 0 0 10px var(--gold), 0 0 20px var(--gold);
+        transform: scale(1);
+    }
+    50% {
+        text-shadow: 0 0 20px var(--gold), 0 0 40px var(--gold), 0 0 60px var(--gold);
+        transform: scale(1.05);
+    }
+    100% {
+        text-shadow: 0 0 10px var(--gold), 0 0 20px var(--gold);
+        transform: scale(1);
+    }
+}
+
+.level-up {
+    animation: level-glow 0.5s ease-in-out;
+}
+
+/* Quest Completion Glow */
+@keyframes quest-complete {
+    0%, 100% {
+        text-shadow: 0 0 5px var(--ui-brd);
+    }
+    50% {
+        text-shadow: 0 0 15px var(--ui-brd), 0 0 25px var(--ui-brd), 0 0 35px var(--ui-brd);
+    }
+}
+
+.q-active.complete {
+    animation: quest-complete 1s ease-in-out 3;
+}
+
+/* UI Card Hover Glow */
+.char-card {
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.char-card:hover {
+    box-shadow: 0 0 20px rgba(142, 202, 230, 0.4), 4px 4px 0 rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Minimap Pulse */
+@keyframes minimap-pulse {
+    0%, 100% {
+        box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(142, 202, 230, 0.5), 4px 4px 0 rgba(0, 0, 0, 0.3);
+    }
+}
+
+.minimap-container {
+    animation: minimap-pulse 3s ease-in-out infinite;
+}
+
+/* Button Glow */
+@keyframes button-glow {
+    0%, 100% {
+        box-shadow: 0 6px 0 #7a0410;
+    }
+    50% {
+        box-shadow: 0 6px 0 #7a0410, 0 0 20px rgba(230, 57, 70, 0.8);
+    }
+}
+
+.start-btn {
+    animation: button-glow 2s ease-in-out infinite;
+}
+
+/* Touch Button Active Glow */
+.t-btn.active {
+    background: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 0 15px rgba(255, 107, 157, 0.8);
+}
+
+/* Combo Indicator Glow */
+@keyframes combo-glow {
+    0%, 100% {
+        text-shadow: 0 0 10px var(--accent);
+    }
+    50% {
+        text-shadow: 0 0 20px var(--accent), 0 0 30px var(--accent), 0 0 40px var(--accent);
+    }
+}
+
+.combo-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    color: var(--accent);
+    animation: combo-glow 0.3s ease-in-out;
+    pointer-events: none;
+    z-index: 50;
+}

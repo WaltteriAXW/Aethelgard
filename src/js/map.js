@@ -257,17 +257,63 @@ export class MapSystem {
                     ctx.fillStyle = ((x + y) % 2) ? '#8ab060' : '#81a45a';
                     ctx.fillRect(pixelX, pixelY, tileSize, tileSize);
 
-                    // Add occasional detail
-                    if ((x * y) % 7 === 0) {
+                    // Add varied details for more visual interest
+                    const detailSeed = x * 17 + y * 13;
+
+                    // Grass tufts
+                    if (detailSeed % 5 === 0) {
                         ctx.fillStyle = '#6c8c4a';
-                        ctx.fillRect(pixelX + 10, pixelY + 10, 4, 4);
+                        ctx.fillRect(pixelX + (detailSeed % 30), pixelY + (detailSeed % 35), 3, 4);
+                        ctx.fillRect(pixelX + (detailSeed % 30) + 3, pixelY + (detailSeed % 35), 3, 3);
                     }
+
+                    // Small stones
+                    if (detailSeed % 11 === 0) {
+                        ctx.fillStyle = '#5a6b3a';
+                        ctx.fillRect(pixelX + (detailSeed % 40), pixelY + (detailSeed % 40), 2, 2);
+                    }
+
+                    // Darker spots (dirt patches)
+                    if (detailSeed % 13 === 0) {
+                        ctx.fillStyle = 'rgba(90, 107, 58, 0.3)';
+                        ctx.fillRect(pixelX + (detailSeed % 25), pixelY + (detailSeed % 25), 8, 8);
+                    }
+
+                    // Edge darkening for depth
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                    ctx.fillRect(pixelX, pixelY, tileSize, 2);
+                    ctx.fillRect(pixelX, pixelY, 2, tileSize);
+
                 } else if (tileType === this.TILE_WALL) {
-                    // Wall with mossy texture
+                    // Wall with enhanced mossy texture
                     ctx.fillStyle = '#556b2f'; // Mossy top
                     ctx.fillRect(pixelX, pixelY, tileSize, tileSize);
-                    ctx.fillStyle = '#3a4a20'; // Darker face
+
+                    // Darker face for 3D effect
+                    ctx.fillStyle = '#3a4a20';
                     ctx.fillRect(pixelX, pixelY + tileSize - 12, tileSize, 12);
+
+                    // Add cracks and wear
+                    const crackSeed = x * 23 + y * 19;
+                    if (crackSeed % 7 === 0) {
+                        ctx.strokeStyle = '#2a3a10';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(pixelX + (crackSeed % 20), pixelY + (crackSeed % 30));
+                        ctx.lineTo(pixelX + (crackSeed % 20) + 8, pixelY + (crackSeed % 30) + 12);
+                        ctx.stroke();
+                    }
+
+                    // Moss patches
+                    if (crackSeed % 9 === 0) {
+                        ctx.fillStyle = '#4a5b1f';
+                        ctx.fillRect(pixelX + (crackSeed % 35), pixelY + (crackSeed % 35), 4, 3);
+                    }
+
+                    // Highlight edge for definition
+                    ctx.fillStyle = 'rgba(100, 120, 60, 0.3)';
+                    ctx.fillRect(pixelX, pixelY, tileSize, 1);
+                    ctx.fillRect(pixelX, pixelY, 1, tileSize);
                 }
             }
         }

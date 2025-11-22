@@ -29,10 +29,14 @@ export class Game {
         this.particles = [];
         this.quest = null;
 
-        this.camera = { x: 0, y: 0, shake: 0 };
+        this.camera = { x: 0, y: 0, shake: 0, shakeX: 0, shakeY: 0, rotation: 0 };
         this.state = 'MENU';
         this.lastTime = 0;
         this.hitStopTimer = 0;
+        this.lightFlicker = 0;
+        this.screenFlash = 0;
+        this.chromaticAberration = 0;
+        this.fadeIn = 1; // Start with black screen
     }
 
     /**
@@ -197,9 +201,41 @@ export class Game {
         this.camera.x += (targetX - this.camera.x) * 0.1;
         this.camera.y += (targetY - this.camera.y) * 0.1;
 
-        // Update camera shake
+        // Update camera shake with improved decay
         if (this.camera.shake > 0) {
-            this.camera.shake = Math.max(0, this.camera.shake - dt * 10);
+            // Exponential decay for smoother feel
+            this.camera.shake *= Math.pow(0.1, dt);
+            if (this.camera.shake < 0.01) this.camera.shake = 0;
+
+            // Decay directional offset
+            this.camera.shakeX *= Math.pow(0.05, dt);
+            this.camera.shakeY *= Math.pow(0.05, dt);
+
+            // Decay rotation
+            this.camera.rotation *= Math.pow(0.1, dt);
+        }
+
+        // Update light flicker for atmospheric lighting
+        this.lightFlicker += dt * 3;
+        if (this.lightFlicker > Math.PI * 2) {
+            this.lightFlicker -= Math.PI * 2;
+        }
+
+        // Update post-processing effects
+        if (this.screenFlash > 0) {
+            this.screenFlash -= dt * 3;
+            if (this.screenFlash < 0) this.screenFlash = 0;
+        }
+
+        if (this.chromaticAberration > 0) {
+            this.chromaticAberration -= dt * 2;
+            if (this.chromaticAberration < 0) this.chromaticAberration = 0;
+        }
+
+        // Fade in effect
+        if (this.fadeIn > 0) {
+            this.fadeIn -= dt * 0.5;
+            if (this.fadeIn < 0) this.fadeIn = 0;
         }
     }
 
@@ -211,16 +247,28 @@ export class Game {
         this.ctx.fillStyle = '#2b2d42';
         this.ctx.fillRect(0, 0, CFG.W, CFG.H);
 
-        // Apply camera shake
+        // Apply enhanced camera shake with directional component
+        const shakeIntensity = this.camera.shake * 8;
+        const randomShakeX = (Math.random() - 0.5) * shakeIntensity;
+        const randomShakeY = (Math.random() - 0.5) * shakeIntensity;
+
         const cameraX = Math.floor(
-            this.camera.x + (Math.random() - 0.5) * this.camera.shake * 5
+            this.camera.x + randomShakeX + this.camera.shakeX
         );
         const cameraY = Math.floor(
-            this.camera.y + (Math.random() - 0.5) * this.camera.shake * 5
+            this.camera.y + randomShakeY + this.camera.shakeY
         );
 
-        // Draw world
+        // Draw world with rotation shake
         this.ctx.save();
+
+        // Apply rotation shake if active
+        if (this.camera.rotation !== 0) {
+            this.ctx.translate(CFG.W / 2, CFG.H / 2);
+            this.ctx.rotate(this.camera.rotation * 0.02);
+            this.ctx.translate(-CFG.W / 2, -CFG.H / 2);
+        }
+
         this.ctx.translate(-cameraX, -cameraY);
 
         this.map.draw(this.ctx, { x: cameraX, y: cameraY });
@@ -234,6 +282,9 @@ export class Game {
 
         // Draw minimap
         this.drawMinimap();
+
+        // Apply post-processing effects
+        this.drawPostProcessing();
     }
 
     /**
@@ -245,28 +296,49 @@ export class Game {
         // Clear lighting canvas
         this.lightCtx.clearRect(0, 0, CFG.W, CFG.H);
 
-        // Draw dusk overlay
+        // Draw dusk overlay with slight variation
         this.lightCtx.globalCompositeOperation = 'source-over';
-        this.lightCtx.fillStyle = `rgba(20, 25, 60, ${CFG.LIGHT_OPACITY})`;
+        const overlayAlpha = CFG.LIGHT_OPACITY + Math.sin(this.lightFlicker * 0.5) * 0.02;
+        this.lightCtx.fillStyle = `rgba(20, 25, 60, ${overlayAlpha})`;
         this.lightCtx.fillRect(0, 0, CFG.W, CFG.H);
 
         // Cut out light areas
         this.lightCtx.globalCompositeOperation = 'destination-out';
 
-        // Player light
+        // Player light (blue tint with flicker)
+        const playerFlicker = 1 + Math.sin(this.lightFlicker) * 0.05;
         this.drawLight(
             this.player.x - cameraX + 16,
             this.player.y - cameraY + 16,
-            CFG.PLAYER_LIGHT_RADIUS
+            CFG.PLAYER_LIGHT_RADIUS * playerFlicker,
+            'rgba(0,0,0,1)',
+            'rgba(100,150,255,0)'
         );
 
-        // Loot lights
+        // Loot lights (golden with flicker)
         this.entities.forEach(entity => {
             if (entity.spriteKey === 'orb') {
+                const lootFlicker = 1 + Math.sin(this.lightFlicker * 2 + entity.x) * 0.1;
                 this.drawLight(
                     entity.x - cameraX + 8,
                     entity.y - cameraY + 8,
-                    CFG.LOOT_LIGHT_RADIUS
+                    CFG.LOOT_LIGHT_RADIUS * lootFlicker,
+                    'rgba(0,0,0,1)',
+                    'rgba(255,200,0,0)'
+                );
+            }
+        });
+
+        // Enemy lights (reddish glow)
+        this.entities.forEach(entity => {
+            if (entity.spriteKey === 'skel' || entity.spriteKey === 'wraith' || entity.spriteKey === 'golem') {
+                const enemyFlicker = 1 + Math.sin(this.lightFlicker * 1.5 + entity.y) * 0.08;
+                this.drawLight(
+                    entity.x - cameraX + 16,
+                    entity.y - cameraY + 16,
+                    60 * enemyFlicker,
+                    'rgba(0,0,0,1)',
+                    'rgba(255,50,50,0)'
                 );
             }
         });
@@ -276,15 +348,18 @@ export class Game {
     }
 
     /**
-     * Draw a light source
+     * Draw a light source with color tint
      * @param {number} x - X position
      * @param {number} y - Y position
      * @param {number} radius - Light radius
+     * @param {string} centerColor - Center color (default black for cutout)
+     * @param {string} edgeColor - Edge color for colored tint
      */
-    drawLight(x, y, radius) {
+    drawLight(x, y, radius, centerColor = 'rgba(0,0,0,1)', edgeColor = 'rgba(0,0,0,0)') {
         const gradient = this.lightCtx.createRadialGradient(x, y, 0, x, y, radius);
-        gradient.addColorStop(0, 'rgba(0,0,0,1)');
-        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        gradient.addColorStop(0, centerColor);
+        gradient.addColorStop(0.7, 'rgba(0,0,0,0.5)');
+        gradient.addColorStop(1, edgeColor);
 
         this.lightCtx.fillStyle = gradient;
         this.lightCtx.beginPath();
@@ -323,21 +398,57 @@ export class Game {
             }
         }
 
-        // Draw enemies
+        // Draw enemies with different markers per type
         this.entities.forEach(entity => {
-            if (entity === this.player) return;
+            if (entity === this.player || entity.spriteKey === 'orb') return;
 
             const mmX = Math.floor((entity.x / CFG.TILE) * scale);
             const mmY = Math.floor((entity.y / CFG.TILE) * scale);
 
-            this.minimapCtx.fillStyle = '#e63946';
-            this.minimapCtx.fillRect(mmX - 1, mmY - 1, 2, 2);
+            // Pulsing effect for enemies
+            const pulse = 1 + Math.sin(this.lightFlicker * 2) * 0.3;
+
+            // Different colors/shapes per enemy type
+            if (entity.spriteKey === 'golem') {
+                this.minimapCtx.fillStyle = '#f77f00';
+                this.minimapCtx.fillRect(mmX - 2, mmY - 2, 4, 4);
+            } else if (entity.spriteKey === 'wraith') {
+                this.minimapCtx.fillStyle = '#b185db';
+                this.minimapCtx.beginPath();
+                this.minimapCtx.arc(mmX, mmY, 1.5 * pulse, 0, Math.PI * 2);
+                this.minimapCtx.fill();
+            } else {
+                this.minimapCtx.fillStyle = '#e63946';
+                this.minimapCtx.fillRect(mmX - 1, mmY - 1, 2, 2);
+            }
+        });
+
+        // Draw loot orbs
+        this.entities.forEach(entity => {
+            if (entity.spriteKey === 'orb') {
+                const mmX = Math.floor((entity.x / CFG.TILE) * scale);
+                const mmY = Math.floor((entity.y / CFG.TILE) * scale);
+                this.minimapCtx.fillStyle = '#ffb703';
+                this.minimapCtx.beginPath();
+                this.minimapCtx.arc(mmX, mmY, 1, 0, Math.PI * 2);
+                this.minimapCtx.fill();
+            }
         });
 
         // Draw player
         const playerMmX = Math.floor((this.player.x / CFG.TILE) * scale);
         const playerMmY = Math.floor((this.player.y / CFG.TILE) * scale);
 
+        // Player facing direction indicator
+        this.minimapCtx.fillStyle = 'rgba(255, 183, 3, 0.3)';
+        this.minimapCtx.beginPath();
+        this.minimapCtx.moveTo(playerMmX, playerMmY);
+        const facingAngle = this.player.face > 0 ? 0 : Math.PI;
+        this.minimapCtx.arc(playerMmX, playerMmY, 15, facingAngle - Math.PI / 6, facingAngle + Math.PI / 6);
+        this.minimapCtx.closePath();
+        this.minimapCtx.fill();
+
+        // Player marker
         this.minimapCtx.fillStyle = '#ffb703';
         this.minimapCtx.fillRect(playerMmX - 1, playerMmY - 1, 3, 3);
 
@@ -353,6 +464,81 @@ export class Game {
      */
     freeze(duration) {
         this.hitStopTimer = duration;
+    }
+
+    /**
+     * Add directional screen shake
+     * @param {number} intensity - Shake intensity (0-1)
+     * @param {number} dirX - Direction X (-1 to 1)
+     * @param {number} dirY - Direction Y (-1 to 1)
+     * @param {boolean} addRotation - Add rotation component
+     */
+    addShake(intensity, dirX = 0, dirY = 0, addRotation = false) {
+        this.camera.shake = Math.max(this.camera.shake, intensity);
+
+        if (dirX !== 0 || dirY !== 0) {
+            this.camera.shakeX += dirX * intensity * 10;
+            this.camera.shakeY += dirY * intensity * 10;
+        }
+
+        if (addRotation) {
+            this.camera.rotation += (Math.random() - 0.5) * intensity * 2;
+            this.chromaticAberration = intensity;
+        }
+    }
+
+    /**
+     * Add screen flash effect
+     * @param {number} intensity - Flash intensity (0-1)
+     */
+    addFlash(intensity) {
+        this.screenFlash = Math.max(this.screenFlash, intensity);
+    }
+
+    /**
+     * Draw post-processing effects
+     */
+    drawPostProcessing() {
+        // Vignette effect
+        const vignetteGradient = this.ctx.createRadialGradient(
+            CFG.W / 2, CFG.H / 2, CFG.H * 0.3,
+            CFG.W / 2, CFG.H / 2, CFG.H * 0.8
+        );
+        vignetteGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        vignetteGradient.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
+
+        this.ctx.fillStyle = vignetteGradient;
+        this.ctx.fillRect(0, 0, CFG.W, CFG.H);
+
+        // Scanline effect for retro CRT feel
+        this.ctx.globalAlpha = 0.05;
+        for (let y = 0; y < CFG.H; y += 4) {
+            this.ctx.fillStyle = '#000';
+            this.ctx.fillRect(0, y, CFG.W, 2);
+        }
+        this.ctx.globalAlpha = 1;
+
+        // Screen flash (on hits)
+        if (this.screenFlash > 0) {
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${this.screenFlash * 0.3})`;
+            this.ctx.fillRect(0, 0, CFG.W, CFG.H);
+        }
+
+        // Chromatic aberration (on heavy hits)
+        if (this.chromaticAberration > 0) {
+            this.ctx.globalAlpha = this.chromaticAberration * 0.2;
+            this.ctx.fillStyle = '#ff0000';
+            this.ctx.fillRect(-2, 0, CFG.W, CFG.H);
+            this.ctx.fillStyle = '#00ffff';
+            this.ctx.fillRect(2, 0, CFG.W, CFG.H);
+            this.ctx.globalAlpha = 1;
+        }
+
+        // Fade in transition
+        if (this.fadeIn > 0) {
+            this.ctx.fillStyle = `rgba(0, 0, 0, ${this.fadeIn})`;
+            this.ctx.fillRect(0, 0, CFG.W, CFG.H);
+        }
     }
 }
 

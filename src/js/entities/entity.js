@@ -85,12 +85,18 @@ export class Entity {
         const sprite = graphics.get(this.spriteKey);
         if (!sprite) return;
 
+        // Draw shadow beneath entity
+        this.drawShadow(ctx);
+
         ctx.save();
         ctx.translate(
             Math.floor(this.x + 16),
             Math.floor(this.y + 16)
         );
         ctx.scale(this.face * CFG.SCALE, CFG.SCALE);
+
+        // Draw sprite outline for better visibility
+        this.drawOutline(ctx, sprite);
 
         // Flash effect
         if (this.flash > 0) {
@@ -105,6 +111,59 @@ export class Entity {
         }
 
         ctx.restore();
+    }
+
+    /**
+     * Draw shadow beneath entity for depth
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     */
+    drawShadow(ctx) {
+        ctx.save();
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = '#000';
+
+        // Create elliptical shadow
+        ctx.beginPath();
+        const shadowWidth = this.w * 0.8;
+        const shadowHeight = this.w * 0.3;
+        const centerX = this.x + this.w / 2;
+        const centerY = this.y + this.h - 4;
+
+        ctx.ellipse(centerX, centerY, shadowWidth / 2, shadowHeight / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    /**
+     * Draw outline around sprite for visibility
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * @param {Image} sprite - Sprite image
+     */
+    drawOutline(ctx, sprite) {
+        ctx.globalCompositeOperation = 'source-over';
+
+        // Create dark outline by drawing sprite offset in 8 directions
+        const outlineOffsets = [
+            [-1, -1], [0, -1], [1, -1],
+            [-1, 0],           [1, 0],
+            [-1, 1],  [0, 1],  [1, 1]
+        ];
+
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = '#000';
+
+        for (const [ox, oy] of outlineOffsets) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-over';
+            ctx.drawImage(sprite, -8 + ox, -8 + oy);
+            ctx.globalCompositeOperation = 'source-in';
+            ctx.fillRect(-12, -12, 24, 24);
+            ctx.restore();
+        }
+
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
     }
 
     /**
