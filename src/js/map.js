@@ -296,7 +296,7 @@ export class MapSystem {
                     // Add cracks and wear
                     const crackSeed = x * 23 + y * 19;
                     if (crackSeed % 7 === 0) {
-                        ctx.strokeStyle = '#1a1a28';
+                        ctx.strokeStyle = '#2a3a10';
                         ctx.lineWidth = 1;
                         ctx.beginPath();
                         ctx.moveTo(pixelX + (crackSeed % 20), pixelY + (crackSeed % 30));
@@ -304,14 +304,14 @@ export class MapSystem {
                         ctx.stroke();
                     }
 
-                    // Ancient runes/markings (instead of moss)
+                    // Moss patches
                     if (crackSeed % 9 === 0) {
-                        ctx.fillStyle = '#4a4a70';
+                        ctx.fillStyle = '#4a5b1f';
                         ctx.fillRect(pixelX + (crackSeed % 35), pixelY + (crackSeed % 35), 4, 3);
                     }
 
                     // Highlight edge for definition
-                    ctx.fillStyle = 'rgba(80, 80, 120, 0.3)';
+                    ctx.fillStyle = 'rgba(100, 120, 60, 0.3)';
                     ctx.fillRect(pixelX, pixelY, tileSize, 1);
                     ctx.fillRect(pixelX, pixelY, 1, tileSize);
                 }
