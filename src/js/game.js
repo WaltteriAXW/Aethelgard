@@ -92,13 +92,17 @@ export class Game {
                             this.use3D = false;
                             this.init2DRenderer();
                         }
+                        // CRITICAL: Continue initialization after renderer is ready
+                        this.continueInit();
                     } else {
                         console.error('[Game] THREE.js failed to load, using 2D fallback');
                         this.use3D = false;
                         this.init2DRenderer();
+                        // CRITICAL: Continue initialization even with fallback
+                        this.continueInit();
                     }
                 }, 500);
-                return; // Exit init for now
+                return; // Exit init for now, will continue in setTimeout
             }
 
             this.renderer3d = new Renderer3D(this.canvas);
