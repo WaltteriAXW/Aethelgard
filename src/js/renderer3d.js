@@ -48,9 +48,9 @@ export class Renderer3D {
 
         console.log('[Renderer3D] Starting initialization...');
 
-        // Create scene with dark but visible background
+        // Create scene with much lighter background for high visibility
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x1a1a30); // Slightly lighter for better visibility
+        this.scene.background = new THREE.Color(0x2a2a40); // Much lighter blue-grey
 
         // Setup isometric orthographic camera (Diablo-style)
         const aspect = CFG.W / CFG.H;
@@ -86,8 +86,8 @@ export class Renderer3D {
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        // Setup fog for atmospheric depth (reduced density for better visibility)
-        this.scene.fog = new THREE.FogExp2(0x0a0a0f, 0.02); // Reduced from 0.04
+        // Minimal fog - almost completely removed for maximum visibility
+        this.scene.fog = new THREE.FogExp2(0x1a1a30, 0.005); // Extremely light fog
 
         // Initialize materials
         this.initMaterials();
@@ -111,56 +111,56 @@ export class Renderer3D {
      * Initialize materials for different surface types
      */
     initMaterials() {
-        // Floor material - dark stone with subtle texture
+        // Floor material - MUCH lighter stone for visibility
         this.materials.floor = new THREE.MeshStandardMaterial({
-            color: 0x2a3a2a,
-            roughness: 0.9,
-            metalness: 0.1,
-            flatShading: false
-        });
-
-        // Wall material - darker stone with more depth
-        this.materials.wall = new THREE.MeshStandardMaterial({
-            color: 0x1a2a1a,
-            roughness: 0.95,
-            metalness: 0.05,
-            flatShading: false
-        });
-
-        // Player material - blue armor
-        this.materials.player = new THREE.MeshStandardMaterial({
-            color: 0x3366aa,
-            roughness: 0.4,
-            metalness: 0.6,
-            emissive: 0x1144aa,
-            emissiveIntensity: 0.2
-        });
-
-        // Enemy materials
-        this.materials.skeleton = new THREE.MeshStandardMaterial({
-            color: 0xe0e0d8,
+            color: 0x4a5a4a, // Much lighter green-grey
             roughness: 0.8,
+            metalness: 0.15,
+            flatShading: false
+        });
+
+        // Wall material - lighter stone with high contrast
+        this.materials.wall = new THREE.MeshStandardMaterial({
+            color: 0x3a4a3a, // Much lighter
+            roughness: 0.85,
             metalness: 0.1,
-            emissive: 0xff0000,
-            emissiveIntensity: 0.3
+            flatShading: false
+        });
+
+        // Player material - BRIGHT blue armor with strong glow
+        this.materials.player = new THREE.MeshStandardMaterial({
+            color: 0x5588dd, // Brighter blue
+            roughness: 0.3,
+            metalness: 0.7,
+            emissive: 0x3366cc,
+            emissiveIntensity: 0.5 // Much stronger glow
+        });
+
+        // Enemy materials - MUCH BRIGHTER with strong emissive
+        this.materials.skeleton = new THREE.MeshStandardMaterial({
+            color: 0xffffff, // Pure white bones
+            roughness: 0.7,
+            metalness: 0.15,
+            emissive: 0xff3333,
+            emissiveIntensity: 0.6 // Brighter glow
         });
 
         this.materials.wraith = new THREE.MeshStandardMaterial({
-            color: 0x9966dd,
-            roughness: 0.3,
-            metalness: 0.2,
-            emissive: 0x6644bb,
-            emissiveIntensity: 0.5,
+            color: 0xbb88ff, // Brighter purple
+            roughness: 0.2,
+            metalness: 0.3,
+            emissive: 0x8855dd,
+            emissiveIntensity: 0.8, // Much brighter glow
             transparent: true,
-            opacity: 0.85
+            opacity: 0.9
         });
 
         this.materials.golem = new THREE.MeshStandardMaterial({
-            color: 0x667788,
-            roughness: 1.0,
-            metalness: 0.3,
-            emissive: 0xff7700,
-            emissiveIntensity: 0.4
+            color: 0x889999, // Lighter grey
+            roughness: 0.9,
+            metalness: 0.4,
+            emissive: 0xff9933,
+            emissiveIntensity: 0.7 // Brighter core
         });
 
         // Loot material - glowing gold
@@ -177,25 +177,25 @@ export class Renderer3D {
      * Setup dramatic Diablo-style lighting
      */
     setupLighting() {
-        // Ambient light - much brighter for better visibility
-        this.lights.ambient = new THREE.AmbientLight(0x707090, 0.6); // Increased from 0.4
+        // VERY BRIGHT ambient light - full daylight visibility
+        this.lights.ambient = new THREE.AmbientLight(0xa0a0b0, 1.2); // Dramatically increased
         this.scene.add(this.lights.ambient);
 
-        // Player's torch (main light source - follows player)
-        this.lights.player = new THREE.PointLight(0xffbb66, 12, 50, 1.5); // Much brighter and larger radius
-        this.lights.player.position.set(0, 5, 0);
+        // MASSIVE player torch - like a floodlight
+        this.lights.player = new THREE.PointLight(0xffcc77, 25, 80, 1.0); // Huge intensity and radius
+        this.lights.player.position.set(0, 8, 0); // Raised higher for better coverage
         this.lights.player.castShadow = true;
 
         // Shadow quality settings
         this.lights.player.shadow.mapSize.width = 1024;
         this.lights.player.shadow.mapSize.height = 1024;
         this.lights.player.shadow.camera.near = 0.5;
-        this.lights.player.shadow.camera.far = 50;
+        this.lights.player.shadow.camera.far = 80;
 
         this.scene.add(this.lights.player);
 
-        // Stronger rim light from above (for better character definition)
-        const rimLight = new THREE.DirectionalLight(0x99aacc, 0.8); // Increased from 0.5
+        // VERY STRONG rim light from above - like sunlight
+        const rimLight = new THREE.DirectionalLight(0xbbccdd, 1.5); // Massive increase
         rimLight.position.set(5, 20, 5);
         this.scene.add(rimLight);
 
@@ -468,10 +468,10 @@ export class Renderer3D {
             this.updateParticles(game.particles);
         }
 
-        // Flicker player light for atmosphere
+        // Very subtle flicker - keep lighting stable and bright
         if (this.lights.player) {
-            const flicker = 1 + Math.sin(Date.now() * 0.003) * 0.08; // Reduced flicker amount
-            this.lights.player.intensity = 12 * flicker; // Base intensity is now 12
+            const flicker = 1 + Math.sin(Date.now() * 0.003) * 0.03; // Minimal flicker
+            this.lights.player.intensity = 25 * flicker; // Base intensity is now 25
         }
 
         // Render the scene
