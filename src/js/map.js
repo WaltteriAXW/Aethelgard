@@ -253,50 +253,50 @@ export class MapSystem {
 
                 // Draw tile
                 if (tileType === this.TILE_FLOOR) {
-                    // Grass floor with checkerboard pattern
-                    ctx.fillStyle = ((x + y) % 2) ? '#8ab060' : '#81a45a';
+                    // Cool blue/purple dungeon floor with checkerboard pattern
+                    ctx.fillStyle = ((x + y) % 2) ? '#2a2a3e' : '#252538';
                     ctx.fillRect(pixelX, pixelY, tileSize, tileSize);
 
                     // Add varied details for more visual interest
                     const detailSeed = x * 17 + y * 13;
 
-                    // Grass tufts
+                    // Stone cracks/tiles
                     if (detailSeed % 5 === 0) {
-                        ctx.fillStyle = '#6c8c4a';
+                        ctx.fillStyle = '#3e3e5a';
                         ctx.fillRect(pixelX + (detailSeed % 30), pixelY + (detailSeed % 35), 3, 4);
                         ctx.fillRect(pixelX + (detailSeed % 30) + 3, pixelY + (detailSeed % 35), 3, 3);
                     }
 
-                    // Small stones
+                    // Small stones/debris
                     if (detailSeed % 11 === 0) {
-                        ctx.fillStyle = '#5a6b3a';
+                        ctx.fillStyle = '#1a1a28';
                         ctx.fillRect(pixelX + (detailSeed % 40), pixelY + (detailSeed % 40), 2, 2);
                     }
 
-                    // Darker spots (dirt patches)
+                    // Darker spots (aged stone)
                     if (detailSeed % 13 === 0) {
-                        ctx.fillStyle = 'rgba(90, 107, 58, 0.3)';
+                        ctx.fillStyle = 'rgba(30, 30, 50, 0.4)';
                         ctx.fillRect(pixelX + (detailSeed % 25), pixelY + (detailSeed % 25), 8, 8);
                     }
 
                     // Edge darkening for depth
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
                     ctx.fillRect(pixelX, pixelY, tileSize, 2);
                     ctx.fillRect(pixelX, pixelY, 2, tileSize);
 
                 } else if (tileType === this.TILE_WALL) {
-                    // Wall with enhanced mossy texture
-                    ctx.fillStyle = '#556b2f'; // Mossy top
+                    // Cool purple/blue stone wall
+                    ctx.fillStyle = '#3e3e5a'; // Cool purple top
                     ctx.fillRect(pixelX, pixelY, tileSize, tileSize);
 
                     // Darker face for 3D effect
-                    ctx.fillStyle = '#3a4a20';
+                    ctx.fillStyle = '#2a2a3e';
                     ctx.fillRect(pixelX, pixelY + tileSize - 12, tileSize, 12);
 
                     // Add cracks and wear
                     const crackSeed = x * 23 + y * 19;
                     if (crackSeed % 7 === 0) {
-                        ctx.strokeStyle = '#2a3a10';
+                        ctx.strokeStyle = '#1a1a28';
                         ctx.lineWidth = 1;
                         ctx.beginPath();
                         ctx.moveTo(pixelX + (crackSeed % 20), pixelY + (crackSeed % 30));
@@ -304,14 +304,14 @@ export class MapSystem {
                         ctx.stroke();
                     }
 
-                    // Moss patches
+                    // Ancient runes/markings (instead of moss)
                     if (crackSeed % 9 === 0) {
-                        ctx.fillStyle = '#4a5b1f';
+                        ctx.fillStyle = '#4a4a70';
                         ctx.fillRect(pixelX + (crackSeed % 35), pixelY + (crackSeed % 35), 4, 3);
                     }
 
                     // Highlight edge for definition
-                    ctx.fillStyle = 'rgba(100, 120, 60, 0.3)';
+                    ctx.fillStyle = 'rgba(80, 80, 120, 0.3)';
                     ctx.fillRect(pixelX, pixelY, tileSize, 1);
                     ctx.fillRect(pixelX, pixelY, 1, tileSize);
                 }

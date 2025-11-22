@@ -7,104 +7,128 @@ export class Graphics {
     constructor() {
         this.cache = {};
 
-        // Color palettes for different sprite types
+        // Color palettes with warm/cold contrast for "trailer look"
         this.palettes = {
             hero: {
-                a: '#1d3557',  // Armor blue
+                a: '#2a2a3e',  // Cool dark blue armor
                 s: '#ffcb9a',  // Skin
-                c: '#457b9d',  // Cape/cloth
-                h: '#f1faee',  // Highlights
-                x: '#ffb703'   // Emblem/accent
+                c: '#3e3e5a',  // Cool purple cloth
+                h: '#00ffcc',  // Neon cyan highlights (magic)
+                x: '#ffaa00'   // Hot orange emblem
             },
             skel: {
-                a: '#1d3557',  // Shadow
+                a: '#2a2a3e',  // Cool shadow
                 b: '#e1e5f2',  // Bone white
-                r: '#e63946'   // Red eyes
+                r: '#ff0055'   // Vibrant red eyes
             },
             wraith: {
-                a: '#1d1d3a',  // Dark purple shadow
-                b: '#6a4c93',  // Purple body
-                e: '#b185db',  // Light purple
-                r: '#ff006e'   // Pink eyes
+                a: '#1d1d3a',  // Dark cool shadow
+                b: '#5a4c93',  // Rich purple body
+                e: '#b185db',  // Light purple aura
+                r: '#ff006e'   // Hot pink/magenta eyes
             },
             golem: {
-                a: '#2f3e46',  // Dark rock
-                b: '#52796f',  // Medium rock
-                c: '#84a98c',  // Light rock
-                e: '#f77f00'   // Orange core/eyes
+                a: '#2f3e46',  // Dark cool rock
+                b: '#52796f',  // Medium teal rock
+                c: '#6a9c89',  // Light cool rock
+                e: '#ffaa00'   // Hot orange core/eyes
             },
             loot: {
-                g: '#ffb703',  // Gold
+                g: '#ffaa00',  // Hot orange gold
                 w: '#fff'      // White shine
             }
         };
 
-        // Sprite definitions (16x16 pixel art)
+        // Enhanced sprite definitions (16x16 pixel art) - more detailed
         this.definitions = {
             hero: [
-                '.....aaaa.......',
-                '....aaaaaa......',
-                '....assssa......',
-                '....assssa......',
-                '...aaccccaa.....',
-                '..aaccxxccaa....',
-                '..accxxxxcca....',
-                '..acccccccca....',
-                '...aaaccaaa.....',
-                '...a..aa........',
-                '..aa..aa........',
-                '..aa..aa........'
+                '......aaaa......',
+                '.....ahhhha.....',
+                '....ahhsshha....',
+                '....ahssssaa....',
+                '...aacccccaa....',
+                '..aaccxxccca....',
+                '..acccxxccca....',
+                '..aacccccaaa....',
+                '...haccccah.....',
+                '...ha.aa.ah.....',
+                '..aaa..aaaa.....',
+                '..aa....aa......',
+                '..aa....aa......',
+                '.aa......aa.....',
+                '................',
+                '................'
             ],
             skel: [
-                '.....aaaa.......',
+                '......aaaa......',
+                '.....abbbba.....',
+                '....abrrbba.....',
+                '....abbbbba.....',
+                '...aabbbbbaa....',
+                '..aabbbbbbba....',
+                '..abbbbbbbba....',
+                '..aabbbbbaa.....',
                 '....abbbba......',
-                '....abrbra......',
-                '....abbbba......',
-                '...aabbbbaa.....',
-                '..aababbbaa.....',
-                '..ababbbbba.....',
-                '..aabbbbaa......',
-                '...aa..aa.......',
-                '...a....a.......',
-                '..aa....aa......',
+                '...aa.bb.aa.....',
+                '..aa..bb..aa....',
+                '..aa..aa..aa....',
+                '.aa....aa...aa..',
+                '................',
+                '................',
                 '................'
             ],
             wraith: [
-                '.....aaaa.......',
-                '....abbbba......',
-                '....abreeba.....',
-                '....abbbba......',
+                '......aaaa......',
+                '.....abbbba.....',
+                '....abrrrbba....',
+                '....abeeeeba....',
+                '...aabbbbbaa....',
+                '..aabbbbbbba....',
+                '..abbeebbeea....',
+                '..aabbbbbba.....',
                 '...aabbbaa......',
-                '..aabbbbbaa.....',
-                '..abbebbea......',
-                '..aabbbaaa......',
-                '...aa.aa........',
-                '...a...a........',
-                '..aa...aa.......',
+                '....abbba.......',
+                '...aa.bba.......',
+                '..aa..ba........',
+                '.aa...aa........',
+                '..aa.aa.........',
+                '...aaa..........',
                 '................'
             ],
             golem: [
-                '....aaaaaa......',
-                '...abbbbba......',
-                '..abbcbcbba.....',
-                '..abceecba......',
-                '..abbccbbba.....',
-                '.abbbbbbbbba....',
-                '.abbbcccbbba....',
-                '..abbbbbbba.....',
-                '...aa..aa.......',
-                '...aa..aa.......',
-                '..aa....aa......',
+                '.....aaaaaa.....',
+                '....abbbbba.....',
+                '...abbcccbba....',
+                '..abbceeecba....',
+                '..abcceeeccba...',
+                '.abbbbccccbba...',
+                '.abbbccccccba...',
+                '..abbbbbbbba....',
+                '..aabbbbbbaa....',
+                '...aabbbbaa.....',
+                '...aa.bb.aa.....',
+                '..aa..bb..aa....',
+                '..aa..aa..aa....',
+                '.aa....aa...aa..',
+                '................',
                 '................'
             ],
             orb: [
+                '................',
+                '................',
                 '.....gggg.......',
+                '....ggwwgg......',
+                '...ggwwwwgg.....',
+                '..gggwwwwggg....',
+                '..ggggggggg.....',
                 '...gggggggg.....',
-                '..ggggwggggg....',
-                '..gggwgggggg....',
-                '..gggggggggg....',
-                '...gggggggg.....',
+                '....gggggg......',
                 '.....gggg.......',
+                '................',
+                '................',
+                '................',
+                '................',
+                '................',
                 '................'
             ]
         };

@@ -94,12 +94,12 @@ export class Golem extends Enemy {
         // Override knockback to be less
         this.vx = this.vx * 0.5; // Half the knockback
 
-        // Spawn rock debris on hit
-        for (let i = 0; i < 3; i++) {
+        // Spawn hot orange debris on hit (core energy)
+        for (let i = 0; i < 5; i++) {
             game.particles.push(new Particle(
                 this.x + 20 + (Math.random() - 0.5) * 20,
                 this.y + 20 + (Math.random() - 0.5) * 20,
-                i % 2 === 0 ? '#52796f' : '#84a98c'
+                i % 2 === 0 ? '#ffaa00' : '#ff6600'  // Hot orange
             ));
         }
     }
@@ -115,12 +115,12 @@ export class Golem extends Enemy {
         // Drop loot
         game.entities.push(new Loot(this.x, this.y));
 
-        // Rock debris explosion
-        for (let i = 0; i < 15; i++) {
+        // Hot orange core explosion with rock debris
+        for (let i = 0; i < 20; i++) {
             game.particles.push(new Particle(
                 this.x + 20,
                 this.y + 20,
-                ['#2f3e46', '#52796f', '#84a98c'][i % 3]
+                ['#ffaa00', '#ff6600', '#ff8800'][i % 3]  // Hot orange explosion
             ));
         }
 

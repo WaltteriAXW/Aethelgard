@@ -99,7 +99,7 @@ export class Wraith extends Enemy {
         game.particles.push(new Particle(
             this.x + 16 + (Math.random() - 0.5) * 10,
             this.y + 16 + (Math.random() - 0.5) * 10,
-            '#6a4c93'
+            '#b185db'  // Brighter purple mist
         ));
     }
 
@@ -114,12 +114,12 @@ export class Wraith extends Enemy {
         // Drop loot
         game.entities.push(new Loot(this.x, this.y));
 
-        // Purple mist explosion
-        for (let i = 0; i < 12; i++) {
+        // Vibrant magenta/purple mist explosion
+        for (let i = 0; i < 18; i++) {
             game.particles.push(new Particle(
                 this.x + 16,
                 this.y + 16,
-                i % 2 === 0 ? '#6a4c93' : '#b185db'
+                i % 2 === 0 ? '#ff006e' : '#b185db'  // Hot pink and purple
             ));
         }
 
