@@ -76,10 +76,53 @@ export class Game {
 
         if (this.use3D) {
             // Initialize 3D renderer
+            console.log('[Game] Attempting to initialize 3D renderer...');
+
+            // Check if THREE is available
+            if (typeof THREE === 'undefined') {
+                console.warn('[Game] THREE.js not loaded yet, waiting...');
+                // Wait a bit for Three.js to load from CDN
+                setTimeout(() => {
+                    if (typeof THREE !== 'undefined') {
+                        console.log('[Game] THREE.js loaded, retrying 3D init...');
+                        this.renderer3d = new Renderer3D(this.canvas);
+                        const success = this.renderer3d.init();
+                        if (!success) {
+                            console.error('[Game] 3D renderer failed, falling back to 2D');
+                            this.use3D = false;
+                            this.init2DRenderer();
+                        }
+                    } else {
+                        console.error('[Game] THREE.js failed to load, using 2D fallback');
+                        this.use3D = false;
+                        this.init2DRenderer();
+                    }
+                }, 500);
+                return; // Exit init for now
+            }
+
             this.renderer3d = new Renderer3D(this.canvas);
-            this.renderer3d.init();
+            const success = this.renderer3d.init();
+
+            if (!success) {
+                console.error('[Game] 3D renderer initialization failed, falling back to 2D');
+                this.use3D = false;
+                this.init2DRenderer();
+            }
         } else {
-            // Fallback to 2D canvas
+            this.init2DRenderer();
+        }
+
+        // Continue with the rest of init after renderer is set up
+        this.continueInit();
+    }
+
+    /**
+     * Initialize 2D canvas renderer
+     */
+    init2DRenderer() {
+        if (!this.ctx) {
+            console.log('[Game] Initializing 2D canvas renderer');
             this.ctx = this.canvas.getContext('2d');
             this.canvas.width = CFG.W;
             this.canvas.height = CFG.H;
@@ -91,7 +134,12 @@ export class Game {
             this.lightCanvas.height = CFG.H;
             this.lightCtx = this.lightCanvas.getContext('2d');
         }
+    }
 
+    /**
+     * Continue initialization after renderer is set up
+     */
+    continueInit() {
         // Setup minimap (2D for now, even in 3D mode)
         this.minimapCanvas = document.getElementById('minimap');
         if (this.minimapCanvas) {

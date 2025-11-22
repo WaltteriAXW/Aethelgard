@@ -40,9 +40,17 @@ export class Renderer3D {
      * Initialize the 3D rendering system
      */
     init() {
+        // Check if Three.js is loaded
+        if (typeof THREE === 'undefined') {
+            console.error('[Renderer3D] THREE.js is not loaded! Cannot initialize 3D renderer.');
+            return false;
+        }
+
+        console.log('[Renderer3D] Starting initialization...');
+
         // Create scene with dark background
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x0a0a0f);
+        this.scene.background = new THREE.Color(0x1a1a2e); // Lighter for debugging
 
         // Setup isometric orthographic camera (Diablo-style)
         const aspect = CFG.W / CFG.H;
@@ -64,11 +72,15 @@ export class Renderer3D {
         // Create WebGL renderer
         this.renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
-            antialias: true,
+            antialias: CFG.ENABLE_ANTIALIASING,
             alpha: false
         });
-        this.renderer.setSize(CFG.W, CFG.H);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+
+        // Set canvas size explicitly
+        this.canvas.width = CFG.W;
+        this.canvas.height = CFG.H;
+        this.renderer.setSize(CFG.W, CFG.H, false); // false = don't update style
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap at 2x for performance
 
         // Enable shadows for dramatic lighting
         this.renderer.shadowMap.enabled = true;
@@ -86,7 +98,13 @@ export class Renderer3D {
         // Initialize particle geometry
         this.particleGeometry = new THREE.SphereGeometry(0.1, 8, 8);
 
-        console.log('[Renderer3D] Initialized with Three.js r158');
+        console.log('[Renderer3D] ✅ Initialized successfully');
+        console.log(`[Renderer3D] - Scene background: ${this.scene.background.getHexString()}`);
+        console.log(`[Renderer3D] - Canvas size: ${this.canvas.width}x${this.canvas.height}`);
+        console.log(`[Renderer3D] - Camera position: (${this.camera.position.x}, ${this.camera.position.y}, ${this.camera.position.z})`);
+        console.log(`[Renderer3D] - Shadows enabled: ${this.renderer.shadowMap.enabled}`);
+
+        return true;
     }
 
     /**
@@ -159,12 +177,12 @@ export class Renderer3D {
      * Setup dramatic Diablo-style lighting
      */
     setupLighting() {
-        // Very dark ambient light (moonlight through cracks)
-        this.lights.ambient = new THREE.AmbientLight(0x404060, 0.15);
+        // Ambient light - brighter for debugging, will dim later
+        this.lights.ambient = new THREE.AmbientLight(0x606080, 0.4); // Increased from 0.15
         this.scene.add(this.lights.ambient);
 
         // Player's torch (main light source - follows player)
-        this.lights.player = new THREE.PointLight(0xffaa55, 3, 25, 2);
+        this.lights.player = new THREE.PointLight(0xffaa55, 5, 30, 2); // Increased intensity and radius
         this.lights.player.position.set(0, 5, 0);
         this.lights.player.castShadow = true;
 
@@ -177,9 +195,14 @@ export class Renderer3D {
         this.scene.add(this.lights.player);
 
         // Subtle rim light from above (for character definition)
-        const rimLight = new THREE.DirectionalLight(0x8899aa, 0.3);
+        const rimLight = new THREE.DirectionalLight(0x8899aa, 0.5); // Increased from 0.3
         rimLight.position.set(5, 20, 5);
         this.scene.add(rimLight);
+
+        console.log('[Renderer3D] Lighting setup complete:');
+        console.log(`- Ambient: ${this.lights.ambient.intensity}`);
+        console.log(`- Player torch: ${this.lights.player.intensity} (radius: ${this.lights.player.distance})`);
+        console.log(`- Rim light: ${rimLight.intensity}`);
     }
 
     /**
@@ -339,9 +362,10 @@ export class Renderer3D {
         const targetX = cameraData.x / CFG.TILE;
         const targetZ = cameraData.y / CFG.TILE;
 
-        // Smooth camera following
-        this.cameraTarget.x += (targetX - this.cameraTarget.x) * 0.1;
-        this.cameraTarget.y += (targetZ - this.cameraTarget.y) * 0.1;
+        // Smooth camera following (fast on first frame to avoid black screen)
+        const lerpSpeed = (this.cameraTarget.x === 0 && this.cameraTarget.y === 0) ? 1.0 : 0.1;
+        this.cameraTarget.x += (targetX - this.cameraTarget.x) * lerpSpeed;
+        this.cameraTarget.y += (targetZ - this.cameraTarget.y) * lerpSpeed;
 
         // Update camera position (maintain isometric offset)
         this.camera.position.x = this.cameraTarget.x + 25;
@@ -422,6 +446,11 @@ export class Renderer3D {
      * @param {Game} game - Game instance
      */
     render(game) {
+        if (!this.renderer || !this.scene || !this.camera) {
+            console.error('[Renderer3D] Cannot render: renderer not initialized');
+            return;
+        }
+
         // Update camera
         this.updateCamera(game.camera);
 
@@ -442,7 +471,7 @@ export class Renderer3D {
         // Flicker player light for atmosphere
         if (this.lights.player) {
             const flicker = 1 + Math.sin(Date.now() * 0.003) * 0.1;
-            this.lights.player.intensity = 3 * flicker;
+            this.lights.player.intensity = 5 * flicker; // Base intensity is now 5
         }
 
         // Render the scene
