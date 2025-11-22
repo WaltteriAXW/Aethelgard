@@ -101,12 +101,12 @@ export class Enemy extends Entity {
         // Drop loot
         game.entities.push(new Loot(this.x, this.y));
 
-        // Skeleton-specific: Bone fragment particles
-        for (let i = 0; i < 10; i++) {
+        // Skeleton-specific: Hot orange explosion particles for impact
+        for (let i = 0; i < 15; i++) {
             game.particles.push(new Particle(
                 this.x + 16,
                 this.y + 16,
-                i % 3 === 0 ? '#e1e5f2' : '#ccc'
+                i % 3 === 0 ? '#ffaa00' : '#ff6600'  // Hot orange/red
             ));
         }
 

@@ -149,9 +149,9 @@ export class Player extends Entity {
 
         audioSystem.sfx.dash();
 
-        // Dash particles
-        for (let i = 0; i < 5; i++) {
-            game.particles.push(new Particle(this.x + 16, this.y + 16, '#fff'));
+        // Dash particles with neon cyan (magic energy)
+        for (let i = 0; i < 8; i++) {
+            game.particles.push(new Particle(this.x + 16, this.y + 16, '#00ffcc'));
         }
     }
 

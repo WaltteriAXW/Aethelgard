@@ -4,7 +4,7 @@
  */
 
 /**
- * Generic particle
+ * Enhanced particle with bloom effect
  */
 export class Particle {
     constructor(x, y, color) {
@@ -14,46 +14,64 @@ export class Particle {
         this.life = 1;
         this.initialLife = 1;
 
-        // Random velocity
-        this.vx = (Math.random() - 0.5) * 300;
-        this.vy = (Math.random() - 0.5) * 300;
+        // Increased velocity for more explosive effect
+        this.vx = (Math.random() - 0.5) * 400;
+        this.vy = (Math.random() - 0.5) * 400;
 
-        // Random size variation
-        this.size = 4 + Math.random() * 4;
+        // Larger particles for more impact
+        this.size = 5 + Math.random() * 6;
 
         // Random rotation for variety
         this.rotation = Math.random() * Math.PI * 2;
-        this.rotationSpeed = (Math.random() - 0.5) * 10;
+        this.rotationSpeed = (Math.random() - 0.5) * 12;
 
-        // Particle shape (0 = circle, 1 = square, 2 = star)
-        this.shape = Math.floor(Math.random() * 3);
+        // Particle shape (0 = circle, 1 = square, 2 = star, 3 = plus)
+        this.shape = Math.floor(Math.random() * 4);
+
+        // Glow intensity for bloom effect
+        this.glowIntensity = 0.8 + Math.random() * 0.2;
     }
 
     update(dt) {
         this.x += this.vx * dt;
         this.y += this.vy * dt;
-        this.life -= dt * 2;
+        this.life -= dt * 2.5;  // Slightly faster decay
         this.rotation += this.rotationSpeed * dt;
 
         // Apply gravity and friction
-        this.vy += 200 * dt;
-        this.vx *= 0.98;
+        this.vy += 250 * dt;
+        this.vx *= 0.96;  // More friction for trailing effect
     }
 
     draw(ctx) {
         const alpha = this.life;
-        const currentSize = this.size * (0.5 + this.life * 0.5);
+        const currentSize = this.size * (0.6 + this.life * 0.4);
 
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rotation);
         ctx.globalAlpha = alpha;
 
+        // Draw glow layer first (for bloom effect)
+        if (this.glowIntensity > 0.5) {
+            ctx.globalCompositeOperation = 'screen';
+            const glowGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, currentSize * 2);
+            glowGradient.addColorStop(0, this.color + 'aa');
+            glowGradient.addColorStop(0.5, this.color + '44');
+            glowGradient.addColorStop(1, this.color + '00');
+
+            ctx.fillStyle = glowGradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, currentSize * 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
         if (this.shape === 0) {
-            // Circle with radial gradient
+            // Circle with enhanced radial gradient
             const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, currentSize);
             gradient.addColorStop(0, this.color);
-            gradient.addColorStop(0.5, this.color);
+            gradient.addColorStop(0.6, this.color);
             gradient.addColorStop(1, this.color + '00');
 
             ctx.fillStyle = gradient;
@@ -61,11 +79,14 @@ export class Particle {
             ctx.arc(0, 0, currentSize, 0, Math.PI * 2);
             ctx.fill();
         } else if (this.shape === 1) {
-            // Square
+            // Square with outline
             ctx.fillStyle = this.color;
             ctx.fillRect(-currentSize / 2, -currentSize / 2, currentSize, currentSize);
-        } else {
-            // Star shape
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-currentSize / 2, -currentSize / 2, currentSize, currentSize);
+        } else if (this.shape === 2) {
+            // Star shape with glow
             ctx.fillStyle = this.color;
             ctx.beginPath();
             for (let i = 0; i < 5; i++) {
@@ -78,6 +99,12 @@ export class Particle {
             }
             ctx.closePath();
             ctx.fill();
+        } else {
+            // Plus/cross shape
+            ctx.fillStyle = this.color;
+            const thickness = currentSize / 3;
+            ctx.fillRect(-currentSize / 2, -thickness / 2, currentSize, thickness);
+            ctx.fillRect(-thickness / 2, -currentSize / 2, thickness, currentSize);
         }
 
         ctx.restore();

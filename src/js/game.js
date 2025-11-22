@@ -243,8 +243,8 @@ export class Game {
      * Render the game
      */
     render() {
-        // Clear background
-        this.ctx.fillStyle = '#2b2d42';
+        // Clear background with cool dungeon atmosphere
+        this.ctx.fillStyle = '#1a1a28';  // Deep cool blue/purple
         this.ctx.fillRect(0, 0, CFG.W, CFG.H);
 
         // Apply enhanced camera shake with directional component
@@ -288,7 +288,7 @@ export class Game {
     }
 
     /**
-     * Draw lighting layer
+     * Draw lighting layer with bloom/glow effects
      * @param {number} cameraX - Camera X position
      * @param {number} cameraY - Camera Y position
      */
@@ -296,75 +296,134 @@ export class Game {
         // Clear lighting canvas
         this.lightCtx.clearRect(0, 0, CFG.W, CFG.H);
 
-        // Draw dusk overlay with slight variation
-        this.lightCtx.globalCompositeOperation = 'source-over';
-        const overlayAlpha = CFG.LIGHT_OPACITY + Math.sin(this.lightFlicker * 0.5) * 0.02;
-        this.lightCtx.fillStyle = `rgba(20, 25, 60, ${overlayAlpha})`;
+        // Fill with pure darkness as base for lights to pop
+        this.lightCtx.fillStyle = '#000000';
         this.lightCtx.fillRect(0, 0, CFG.W, CFG.H);
 
-        // Cut out light areas
-        this.lightCtx.globalCompositeOperation = 'destination-out';
+        // Use additive blending for overlapping lights to get brighter
+        this.lightCtx.globalCompositeOperation = 'lighter';
 
-        // Player light (blue tint with flicker)
-        const playerFlicker = 1 + Math.sin(this.lightFlicker) * 0.05;
-        this.drawLight(
+        // Player light (cyan/blue glow with flicker)
+        const playerFlicker = 1 + Math.sin(this.lightFlicker) * 0.08;
+        this.drawBloomLight(
             this.player.x - cameraX + 16,
             this.player.y - cameraY + 16,
             CFG.PLAYER_LIGHT_RADIUS * playerFlicker,
-            'rgba(0,0,0,1)',
-            'rgba(100,150,255,0)'
+            'rgba(0, 150, 255, 1)',      // Bright cyan center
+            'rgba(100, 200, 255, 0.3)',  // Soft blue edge
+            true  // Add extra intensity
         );
 
-        // Loot lights (golden with flicker)
+        // Loot lights (hot orange/gold with strong flicker)
         this.entities.forEach(entity => {
             if (entity.spriteKey === 'orb') {
-                const lootFlicker = 1 + Math.sin(this.lightFlicker * 2 + entity.x) * 0.1;
-                this.drawLight(
+                const lootFlicker = 1 + Math.sin(this.lightFlicker * 2 + entity.x) * 0.15;
+                this.drawBloomLight(
                     entity.x - cameraX + 8,
                     entity.y - cameraY + 8,
                     CFG.LOOT_LIGHT_RADIUS * lootFlicker,
-                    'rgba(0,0,0,1)',
-                    'rgba(255,200,0,0)'
+                    'rgba(255, 170, 0, 1)',    // Hot orange center
+                    'rgba(255, 200, 50, 0.4)', // Golden edge
+                    true
                 );
             }
         });
 
-        // Enemy lights (reddish glow)
+        // Enemy lights (different colors per type for variety)
         this.entities.forEach(entity => {
-            if (entity.spriteKey === 'skel' || entity.spriteKey === 'wraith' || entity.spriteKey === 'golem') {
-                const enemyFlicker = 1 + Math.sin(this.lightFlicker * 1.5 + entity.y) * 0.08;
-                this.drawLight(
+            const enemyFlicker = 1 + Math.sin(this.lightFlicker * 1.5 + entity.y) * 0.1;
+
+            if (entity.spriteKey === 'skel') {
+                // Red glow for skeletons
+                this.drawBloomLight(
+                    entity.x - cameraX + 16,
+                    entity.y - cameraY + 16,
+                    50 * enemyFlicker,
+                    'rgba(230, 57, 70, 0.8)',  // Red eyes
+                    'rgba(255, 100, 100, 0.2)',
+                    false
+                );
+            } else if (entity.spriteKey === 'wraith') {
+                // Magenta/pink glow for wraiths
+                this.drawBloomLight(
                     entity.x - cameraX + 16,
                     entity.y - cameraY + 16,
                     60 * enemyFlicker,
-                    'rgba(0,0,0,1)',
-                    'rgba(255,50,50,0)'
+                    'rgba(255, 0, 110, 0.9)',   // Neon pink
+                    'rgba(177, 133, 219, 0.3)', // Purple edge
+                    false
+                );
+            } else if (entity.spriteKey === 'golem') {
+                // Orange core glow for golems
+                this.drawBloomLight(
+                    entity.x - cameraX + 16,
+                    entity.y - cameraY + 16,
+                    55 * enemyFlicker,
+                    'rgba(247, 127, 0, 0.9)',  // Bright orange
+                    'rgba(255, 150, 50, 0.3)',
+                    false
                 );
             }
         });
 
-        // Apply lighting to main canvas
+        // Apply the bloom effect with blur (drawn twice for intensity)
+        this.ctx.save();
+
+        // First pass: Blurred glow
+        this.ctx.filter = 'blur(12px)';
+        this.ctx.globalCompositeOperation = 'screen';  // Screen blend for glow
         this.ctx.drawImage(this.lightCanvas, 0, 0);
+
+        // Second pass: Sharp center without blur for core brightness
+        this.ctx.filter = 'blur(4px)';  // Slight blur for soft edge
+        this.ctx.drawImage(this.lightCanvas, 0, 0);
+
+        // Third pass: No blur for sharp intensity
+        this.ctx.filter = 'none';
+        this.ctx.globalAlpha = 0.7;  // Slightly transparent for balance
+        this.ctx.drawImage(this.lightCanvas, 0, 0);
+
+        this.ctx.restore();
+
+        // Apply dusk overlay on top with reduced opacity for atmosphere
+        this.ctx.globalCompositeOperation = 'source-over';
+        const overlayAlpha = CFG.LIGHT_OPACITY * 0.4;  // Reduced for brighter scene
+        this.ctx.fillStyle = `rgba(20, 25, 60, ${overlayAlpha})`;
+        this.ctx.fillRect(0, 0, CFG.W, CFG.H);
     }
 
     /**
-     * Draw a light source with color tint
+     * Draw a bloom light source with vibrant colors
      * @param {number} x - X position
      * @param {number} y - Y position
      * @param {number} radius - Light radius
-     * @param {string} centerColor - Center color (default black for cutout)
-     * @param {string} edgeColor - Edge color for colored tint
+     * @param {string} centerColor - Bright center color
+     * @param {string} edgeColor - Soft edge color
+     * @param {boolean} addIntensity - Add extra bright core
      */
-    drawLight(x, y, radius, centerColor = 'rgba(0,0,0,1)', edgeColor = 'rgba(0,0,0,0)') {
+    drawBloomLight(x, y, radius, centerColor, edgeColor, addIntensity = false) {
+        // Main gradient light
         const gradient = this.lightCtx.createRadialGradient(x, y, 0, x, y, radius);
         gradient.addColorStop(0, centerColor);
-        gradient.addColorStop(0.7, 'rgba(0,0,0,0.5)');
-        gradient.addColorStop(1, edgeColor);
+        gradient.addColorStop(0.4, edgeColor);
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
 
         this.lightCtx.fillStyle = gradient;
         this.lightCtx.beginPath();
         this.lightCtx.arc(x, y, radius, 0, Math.PI * 2);
         this.lightCtx.fill();
+
+        // Add super bright core for important lights (player, loot)
+        if (addIntensity) {
+            const coreGradient = this.lightCtx.createRadialGradient(x, y, 0, x, y, radius * 0.3);
+            coreGradient.addColorStop(0, centerColor);
+            coreGradient.addColorStop(1, 'rgba(0,0,0,0)');
+
+            this.lightCtx.fillStyle = coreGradient;
+            this.lightCtx.beginPath();
+            this.lightCtx.arc(x, y, radius * 0.3, 0, Math.PI * 2);
+            this.lightCtx.fill();
+        }
     }
 
     /**
@@ -389,10 +448,10 @@ export class Game {
                 const tileSize = Math.max(1, Math.ceil(scale));
 
                 if (tile === this.map.TILE_FLOOR) {
-                    this.minimapCtx.fillStyle = '#6c8c4a';
+                    this.minimapCtx.fillStyle = '#3e3e5a';  // Cool purple floor
                     this.minimapCtx.fillRect(mmX, mmY, tileSize, tileSize);
                 } else if (tile === this.map.TILE_WALL) {
-                    this.minimapCtx.fillStyle = '#3a4a20';
+                    this.minimapCtx.fillStyle = '#2a2a3e';  // Dark blue wall
                     this.minimapCtx.fillRect(mmX, mmY, tileSize, tileSize);
                 }
             }
@@ -496,42 +555,52 @@ export class Game {
     }
 
     /**
-     * Draw post-processing effects
+     * Draw post-processing effects for "trailer look"
      */
     drawPostProcessing() {
-        // Vignette effect
+        // Enhanced vignette effect with color tint
         const vignetteGradient = this.ctx.createRadialGradient(
-            CFG.W / 2, CFG.H / 2, CFG.H * 0.3,
-            CFG.W / 2, CFG.H / 2, CFG.H * 0.8
+            CFG.W / 2, CFG.H / 2, CFG.H * 0.2,
+            CFG.W / 2, CFG.H / 2, CFG.H * 0.9
         );
         vignetteGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-        vignetteGradient.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
+        vignetteGradient.addColorStop(0.6, 'rgba(0, 0, 0, 0.2)');
+        vignetteGradient.addColorStop(1, 'rgba(10, 5, 20, 0.8)');  // Dark purple tint
 
         this.ctx.fillStyle = vignetteGradient;
         this.ctx.fillRect(0, 0, CFG.W, CFG.H);
 
-        // Scanline effect for retro CRT feel
-        this.ctx.globalAlpha = 0.05;
-        for (let y = 0; y < CFG.H; y += 4) {
+        // Subtle scanline effect (lighter than before)
+        this.ctx.globalAlpha = 0.03;
+        for (let y = 0; y < CFG.H; y += 3) {
             this.ctx.fillStyle = '#000';
-            this.ctx.fillRect(0, y, CFG.W, 2);
+            this.ctx.fillRect(0, y, CFG.W, 1);
         }
         this.ctx.globalAlpha = 1;
 
-        // Screen flash (on hits)
+        // Screen flash (on hits) - brighter and more impactful
         if (this.screenFlash > 0) {
-            this.ctx.fillStyle = `rgba(255, 255, 255, ${this.screenFlash * 0.3})`;
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${this.screenFlash * 0.5})`;
             this.ctx.fillRect(0, 0, CFG.W, CFG.H);
         }
 
-        // Chromatic aberration (on heavy hits)
+        // Enhanced chromatic aberration (on heavy hits)
         if (this.chromaticAberration > 0) {
-            this.ctx.globalAlpha = this.chromaticAberration * 0.2;
+            const aberrationOffset = this.chromaticAberration * 3;
+
+            this.ctx.save();
+            this.ctx.globalCompositeOperation = 'screen';
+            this.ctx.globalAlpha = this.chromaticAberration * 0.3;
+
+            // Red channel offset
             this.ctx.fillStyle = '#ff0000';
-            this.ctx.fillRect(-2, 0, CFG.W, CFG.H);
+            this.ctx.fillRect(-aberrationOffset, 0, CFG.W, CFG.H);
+
+            // Cyan channel offset
             this.ctx.fillStyle = '#00ffff';
-            this.ctx.fillRect(2, 0, CFG.W, CFG.H);
-            this.ctx.globalAlpha = 1;
+            this.ctx.fillRect(aberrationOffset, 0, CFG.W, CFG.H);
+
+            this.ctx.restore();
         }
 
         // Fade in transition
