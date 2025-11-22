@@ -488,7 +488,7 @@ export class Game {
      */
     drawAtmosphericFog(cameraX, cameraY) {
         this.ctx.save();
-        this.ctx.globalAlpha = 0.08;
+        this.ctx.globalAlpha = 0.03; // Reduced from 0.08 for better visibility
 
         // Multi-layer parallax fog
         const fogTime = Date.now() * 0.0001;
@@ -511,7 +511,7 @@ export class Game {
         }
 
         // Layer 2: Faster fog (mid)
-        this.ctx.globalAlpha = 0.05;
+        this.ctx.globalAlpha = 0.02; // Reduced from 0.05 for better visibility
         for (let i = 0; i < 4; i++) {
             const fogX = (cameraX * 0.15 + fogTime * 50 + i * 250) % (CFG.W + 250) - 125;
             const fogY = (cameraY * 0.15 + Math.cos(fogTime * 1.5 + i) * 60 + i * 120) % (CFG.H + 120) - 60;
@@ -529,7 +529,7 @@ export class Game {
         }
 
         // Floating dust particles
-        this.ctx.globalAlpha = 0.3;
+        this.ctx.globalAlpha = 0.15; // Reduced from 0.3 for better visibility
         for (let i = 0; i < 30; i++) {
             const dustX = (cameraX * 0.2 + fogTime * 15 + i * 40 + Math.sin(fogTime * 2 + i) * 20) % CFG.W;
             const dustY = (cameraY * 0.2 + fogTime * 10 + i * 30 + Math.cos(fogTime * 1.5 + i) * 15) % CFG.H;
@@ -814,48 +814,11 @@ export class Game {
      * Draw post-processing effects for AAA quality visuals
      */
     drawPostProcessing() {
-        // Motion blur based on player velocity
-        const playerSpeed = Math.hypot(this.player.vx, this.player.vy);
-        if (playerSpeed > 150) {
-            const blurIntensity = Math.min((playerSpeed - 150) / 500, 0.3);
-            const angle = Math.atan2(this.player.vy, this.player.vx);
+        // DISABLED: Motion blur - drawing canvas to itself causes issues
+        // Will implement with offscreen canvas if needed later
 
-            this.ctx.save();
-            this.ctx.globalAlpha = blurIntensity;
-            this.ctx.globalCompositeOperation = 'source-over';
-
-            // Draw multiple offset frames for motion blur
-            for (let i = 1; i <= 3; i++) {
-                const offsetX = -Math.cos(angle) * i * 4;
-                const offsetY = -Math.sin(angle) * i * 4;
-                const alpha = blurIntensity * (1 - i / 4);
-
-                this.ctx.globalAlpha = alpha;
-                this.ctx.drawImage(
-                    this.canvas,
-                    offsetX, offsetY,
-                    CFG.W, CFG.H,
-                    0, 0,
-                    CFG.W, CFG.H
-                );
-            }
-
-            this.ctx.restore();
-        }
-
-        // Film grain for cinematic feel
-        this.ctx.save();
-        this.ctx.globalAlpha = 0.035;
-        const grainData = this.ctx.createImageData(CFG.W, CFG.H);
-        for (let i = 0; i < grainData.data.length; i += 4) {
-            const grain = Math.random() * 255;
-            grainData.data[i] = grain;
-            grainData.data[i + 1] = grain;
-            grainData.data[i + 2] = grain;
-            grainData.data[i + 3] = 255;
-        }
-        this.ctx.putImageData(grainData, 0, 0);
-        this.ctx.restore();
+        // DISABLED: Film grain - putImageData overwrites everything
+        // Need to use overlay technique instead
 
         // Screen flash (on hits) - with color variation
         if (this.screenFlash > 0) {
@@ -906,14 +869,7 @@ export class Game {
             this.ctx.restore();
         }
 
-        // Radial blur on powerful attacks (if camera shake is high)
-        if (this.camera.shake > 0.5) {
-            this.ctx.save();
-            this.ctx.globalAlpha = this.camera.shake * 0.2;
-            this.ctx.filter = `blur(${this.camera.shake * 2}px)`;
-            this.ctx.drawImage(this.canvas, 0, 0);
-            this.ctx.restore();
-        }
+        // DISABLED: Radial blur - drawing canvas to itself causes issues
 
         // Damage vignette (when player HP is low)
         if (this.player.hp < this.player.maxHp * 0.3) {
