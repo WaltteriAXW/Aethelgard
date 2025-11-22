@@ -277,8 +277,8 @@ export class Game {
 
         this.ctx.restore();
 
-        // Draw lighting overlay
-        this.drawLighting(cameraX, cameraY);
+        // TEMPORARILY DISABLED: Draw lighting overlay
+        // this.drawLighting(cameraX, cameraY);
 
         // Draw minimap
         this.drawMinimap();
@@ -557,25 +557,25 @@ export class Game {
      * Draw post-processing effects for "trailer look"
      */
     drawPostProcessing() {
-        // Enhanced vignette effect with color tint
-        const vignetteGradient = this.ctx.createRadialGradient(
-            CFG.W / 2, CFG.H / 2, CFG.H * 0.2,
-            CFG.W / 2, CFG.H / 2, CFG.H * 0.9
-        );
-        vignetteGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-        vignetteGradient.addColorStop(0.6, 'rgba(0, 0, 0, 0.2)');
-        vignetteGradient.addColorStop(1, 'rgba(10, 5, 20, 0.8)');  // Dark purple tint
+        // TEMPORARILY DISABLED: Enhanced vignette effect
+        // const vignetteGradient = this.ctx.createRadialGradient(
+        //     CFG.W / 2, CFG.H / 2, CFG.H * 0.2,
+        //     CFG.W / 2, CFG.H / 2, CFG.H * 0.9
+        // );
+        // vignetteGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        // vignetteGradient.addColorStop(0.6, 'rgba(0, 0, 0, 0.2)');
+        // vignetteGradient.addColorStop(1, 'rgba(10, 5, 20, 0.8)');
 
-        this.ctx.fillStyle = vignetteGradient;
-        this.ctx.fillRect(0, 0, CFG.W, CFG.H);
+        // this.ctx.fillStyle = vignetteGradient;
+        // this.ctx.fillRect(0, 0, CFG.W, CFG.H);
 
-        // Subtle scanline effect (lighter than before)
-        this.ctx.globalAlpha = 0.03;
-        for (let y = 0; y < CFG.H; y += 3) {
-            this.ctx.fillStyle = '#000';
-            this.ctx.fillRect(0, y, CFG.W, 1);
-        }
-        this.ctx.globalAlpha = 1;
+        // TEMPORARILY DISABLED: Subtle scanline effect
+        // this.ctx.globalAlpha = 0.03;
+        // for (let y = 0; y < CFG.H; y += 3) {
+        //     this.ctx.fillStyle = '#000';
+        //     this.ctx.fillRect(0, y, CFG.W, 1);
+        // }
+        // this.ctx.globalAlpha = 1;
 
         // Screen flash (on hits) - brighter and more impactful
         if (this.screenFlash > 0) {

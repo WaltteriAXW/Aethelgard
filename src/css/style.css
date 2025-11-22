@@ -39,8 +39,8 @@ body {
     border: 4px solid #333;
 }
 
-/* Vignette & Scanline Overlay */
-#game-frame::after {
+/* TEMPORARILY DISABLED: Vignette & Scanline Overlay */
+/* #game-frame::after {
     content: " ";
     position: absolute;
     top: 0;
@@ -50,7 +50,6 @@ body {
     pointer-events: none;
     z-index: 10;
 
-    /* Circular vignette shadow around edges */
     background: radial-gradient(
         circle at center,
         rgba(0, 0, 0, 0) 40%,
@@ -58,7 +57,6 @@ body {
         rgba(0, 0, 0, 0.7) 100%
     );
 
-    /* Subtle scanlines overlay */
     background-image:
         linear-gradient(
             rgba(18, 16, 16, 0) 50%,
@@ -71,7 +69,7 @@ body {
             rgba(0, 0, 0, 0.7) 100%
         );
     background-size: 100% 3px, 100% 100%;
-}
+} */
 
 canvas {
     display: block;
@@ -79,8 +77,8 @@ canvas {
     height: 100%;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
-    /* High contrast and saturation for dramatic "trailer" look */
-    filter: contrast(1.15) saturate(1.25) brightness(1.05);
+    /* TEMPORARILY DISABLED: High contrast filters */
+    /* filter: contrast(1.15) saturate(1.25) brightness(1.05); */
 }
 
 /* UI Layer */
