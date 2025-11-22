@@ -453,3 +453,223 @@ canvas {
     pointer-events: none;
     z-index: 50;
 }
+
+/* ==========================================
+   DIABLO-STYLE HEALTH & MANA ORBS
+   ========================================== */
+
+.orb-container {
+    position: absolute;
+    bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    z-index: 25;
+}
+
+.orb-container.left-orb {
+    left: 40px;
+}
+
+.orb-container.right-orb {
+    right: 40px;
+}
+
+/* The Spherical Orb */
+.orb-sphere {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #0a0a0a;
+    border: 3px solid #222;
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.8),
+        inset 0 -10px 20px rgba(0, 0, 0, 0.6),
+        inset 0 10px 20px rgba(255, 255, 255, 0.1);
+}
+
+/* The Liquid Fill (Health or Mana) */
+.orb-liquid {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    transition: height 0.3s ease-out;
+    border-radius: 50%;
+}
+
+/* Health Orb Liquid - Deep Crimson Red */
+.health-orb .orb-liquid {
+    background: linear-gradient(
+        to bottom,
+        #8B0000 0%,
+        #B22222 20%,
+        #DC143C 50%,
+        #8B0000 100%
+    );
+    box-shadow:
+        inset 0 -15px 30px rgba(0, 0, 0, 0.5),
+        0 0 30px rgba(220, 20, 60, 0.6);
+    animation: liquid-pulse-health 2s ease-in-out infinite;
+}
+
+@keyframes liquid-pulse-health {
+    0%, 100% {
+        filter: brightness(1);
+    }
+    50% {
+        filter: brightness(1.15);
+    }
+}
+
+/* Mana Orb Liquid - Deep Sapphire Blue */
+.mana-orb .orb-liquid {
+    background: linear-gradient(
+        to bottom,
+        #00008B 0%,
+        #0000CD 20%,
+        #1E90FF 50%,
+        #00008B 100%
+    );
+    box-shadow:
+        inset 0 -15px 30px rgba(0, 0, 0, 0.5),
+        0 0 30px rgba(30, 144, 255, 0.6);
+    animation: liquid-pulse-mana 2s ease-in-out infinite;
+}
+
+@keyframes liquid-pulse-mana {
+    0%, 100% {
+        filter: brightness(1);
+    }
+    50% {
+        filter: brightness(1.2);
+    }
+}
+
+/* Glass Reflection Effect */
+.orb-glass {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.4) 0%,
+        rgba(255, 255, 255, 0) 30%,
+        rgba(0, 0, 0, 0.1) 60%,
+        rgba(255, 255, 255, 0.2) 100%
+    );
+    pointer-events: none;
+}
+
+/* Shiny Highlight */
+.orb-shine {
+    position: absolute;
+    top: 12px;
+    left: 18px;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: radial-gradient(
+        circle at 30% 30%,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0.4) 40%,
+        rgba(255, 255, 255, 0) 70%
+    );
+    pointer-events: none;
+    animation: orb-shine-pulse 3s ease-in-out infinite;
+}
+
+@keyframes orb-shine-pulse {
+    0%, 100% {
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Orb Label */
+.orb-label {
+    margin-top: 10px;
+    font-size: 9px;
+    color: #999;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    letter-spacing: 2px;
+}
+
+/* Orb Value (e.g., "100/100") */
+.orb-value {
+    font-size: 11px;
+    margin-top: 4px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+}
+
+.left-orb .orb-value {
+    color: #DC143C;
+}
+
+.right-orb .orb-value {
+    color: #1E90FF;
+}
+
+/* Low Health Warning */
+@keyframes orb-warning {
+    0%, 100% {
+        box-shadow:
+            0 8px 20px rgba(0, 0, 0, 0.8),
+            inset 0 -10px 20px rgba(0, 0, 0, 0.6),
+            0 0 20px rgba(220, 20, 60, 0.8);
+    }
+    50% {
+        box-shadow:
+            0 8px 20px rgba(0, 0, 0, 0.8),
+            inset 0 -10px 20px rgba(0, 0, 0, 0.6),
+            0 0 40px rgba(220, 20, 60, 1),
+            0 0 60px rgba(220, 20, 60, 0.6);
+    }
+}
+
+.health-orb.low-health {
+    animation: orb-warning 0.8s ease-in-out infinite;
+}
+
+/* Responsive Orbs */
+@media (max-width: 768px) {
+    .orb-sphere {
+        width: 70px;
+        height: 70px;
+    }
+
+    .orb-shine {
+        top: 8px;
+        left: 12px;
+        width: 25px;
+        height: 25px;
+    }
+
+    .orb-label {
+        font-size: 7px;
+    }
+
+    .orb-value {
+        font-size: 9px;
+    }
+
+    .orb-container.left-orb {
+        left: 20px;
+        bottom: 15px;
+    }
+
+    .orb-container.right-orb {
+        right: 20px;
+        bottom: 15px;
+    }
+}

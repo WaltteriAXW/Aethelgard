@@ -814,11 +814,15 @@ export class Game {
      * Draw post-processing effects for AAA quality visuals
      */
     drawPostProcessing() {
-        // DISABLED: Motion blur - drawing canvas to itself causes issues
-        // Will implement with offscreen canvas if needed later
+        // DIABLO-LIKE DARKNESS AND FOG OF WAR
+        if (CFG.DARKNESS_ENABLED) {
+            this.drawDiabloDarkness();
+        }
 
-        // DISABLED: Film grain - putImageData overwrites everything
-        // Need to use overlay technique instead
+        // Film grain for gritty look
+        if (CFG.FILM_GRAIN_INTENSITY > 0) {
+            this.drawFilmGrain();
+        }
 
         // Screen flash (on hits) - with color variation
         if (this.screenFlash > 0) {
@@ -869,11 +873,9 @@ export class Game {
             this.ctx.restore();
         }
 
-        // DISABLED: Radial blur - drawing canvas to itself causes issues
-
         // Damage vignette (when player HP is low)
-        if (this.player.hp < this.player.maxHp * 0.3) {
-            const healthPercent = this.player.hp / this.player.maxHp;
+        if (this.player.stats.hp < this.player.stats.maxHp * 0.3) {
+            const healthPercent = this.player.stats.hp / this.player.stats.maxHp;
             const vignetteIntensity = (0.3 - healthPercent) / 0.3;
 
             const damageVignette = this.ctx.createRadialGradient(
@@ -888,11 +890,96 @@ export class Game {
             this.ctx.fillRect(0, 0, CFG.W, CFG.H);
         }
 
+        // Standard vignette for atmosphere
+        if (CFG.VIGNETTE_INTENSITY > 0) {
+            const vignette = this.ctx.createRadialGradient(
+                CFG.W / 2, CFG.H / 2, CFG.H * 0.2,
+                CFG.W / 2, CFG.H / 2, CFG.H * 0.9
+            );
+            vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+            vignette.addColorStop(1, `rgba(0, 0, 0, ${CFG.VIGNETTE_INTENSITY})`);
+
+            this.ctx.fillStyle = vignette;
+            this.ctx.fillRect(0, 0, CFG.W, CFG.H);
+        }
+
         // Fade in transition
         if (this.fadeIn > 0) {
             this.ctx.fillStyle = `rgba(0, 0, 0, ${this.fadeIn})`;
             this.ctx.fillRect(0, 0, CFG.W, CFG.H);
         }
+    }
+
+    /**
+     * Draw Diablo-like darkness with fog of war
+     * The darkness is oppressive - only a small circle around the player is visible
+     */
+    drawDiabloDarkness() {
+        this.ctx.save();
+        this.ctx.globalCompositeOperation = 'source-over';
+
+        // Fill entire screen with near-black darkness
+        this.ctx.fillStyle = `rgba(5, 5, 10, ${CFG.DARKNESS_OPACITY})`;
+        this.ctx.fillRect(0, 0, CFG.W, CFG.H);
+
+        // Cut out vision circles around light sources using 'destination-out'
+        this.ctx.globalCompositeOperation = 'destination-out';
+
+        // Player vision circle (largest)
+        const playerScreenX = this.player.x - this.camera.x + 16;
+        const playerScreenY = this.player.y - this.camera.y + 16;
+
+        const visionGradient = this.ctx.createRadialGradient(
+            playerScreenX, playerScreenY, 0,
+            playerScreenX, playerScreenY, CFG.VISION_RADIUS
+        );
+        visionGradient.addColorStop(0, `rgba(0, 0, 0, ${CFG.DARKNESS_OPACITY})`);
+        visionGradient.addColorStop(CFG.LIGHT_FALLOFF, `rgba(0, 0, 0, ${CFG.DARKNESS_OPACITY * 0.5})`);
+        visionGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        this.ctx.fillStyle = visionGradient;
+        this.ctx.fillRect(0, 0, CFG.W, CFG.H);
+
+        // Loot orbs create small light circles
+        this.entities.forEach(entity => {
+            if (entity.spriteKey === 'orb') {
+                const lootScreenX = entity.x - this.camera.x + 8;
+                const lootScreenY = entity.y - this.camera.y + 8;
+
+                const lootGradient = this.ctx.createRadialGradient(
+                    lootScreenX, lootScreenY, 0,
+                    lootScreenX, lootScreenY, CFG.LOOT_LIGHT_RADIUS
+                );
+                lootGradient.addColorStop(0, `rgba(0, 0, 0, ${CFG.DARKNESS_OPACITY * 0.8})`);
+                lootGradient.addColorStop(0.7, `rgba(0, 0, 0, ${CFG.DARKNESS_OPACITY * 0.3})`);
+                lootGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                this.ctx.fillStyle = lootGradient;
+                this.ctx.fillRect(0, 0, CFG.W, CFG.H);
+            }
+        });
+
+        this.ctx.restore();
+    }
+
+    /**
+     * Draw film grain for gritty Diablo-like aesthetic
+     */
+    drawFilmGrain() {
+        this.ctx.save();
+        this.ctx.globalAlpha = CFG.FILM_GRAIN_INTENSITY;
+        this.ctx.globalCompositeOperation = 'overlay';
+
+        // Create noise pattern
+        for (let i = 0; i < 3000; i++) {
+            const x = Math.random() * CFG.W;
+            const y = Math.random() * CFG.H;
+            const brightness = Math.random() * 255;
+            this.ctx.fillStyle = `rgb(${brightness}, ${brightness}, ${brightness})`;
+            this.ctx.fillRect(x, y, 1, 1);
+        }
+
+        this.ctx.restore();
     }
 }
 

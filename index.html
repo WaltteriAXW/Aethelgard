@@ -29,15 +29,33 @@
 
         <!-- UI Layer -->
         <div id="ui-layer">
+            <!-- DIABLO-STYLE HEALTH & MANA ORBS -->
+            <div class="orb-container left-orb">
+                <div class="orb-sphere health-orb">
+                    <div class="orb-liquid" id="health-orb-fill"></div>
+                    <div class="orb-shine"></div>
+                    <div class="orb-glass"></div>
+                </div>
+                <div class="orb-label">HEALTH</div>
+                <div class="orb-value" id="health-value">100/100</div>
+            </div>
+
+            <div class="orb-container right-orb">
+                <div class="orb-sphere mana-orb">
+                    <div class="orb-liquid" id="mana-orb-fill"></div>
+                    <div class="orb-shine"></div>
+                    <div class="orb-glass"></div>
+                </div>
+                <div class="orb-label">MANA</div>
+                <div class="orb-value" id="mana-value">100/100</div>
+            </div>
+
             <div class="hud-header">
                 <!-- Character Stats -->
                 <div class="char-card">
                     <div class="stat-row">
-                        <span>ARCHITECT</span>
+                        <span id="class-name">ARCHITECT</span>
                         <span id="lvl-txt">LVL 1</span>
-                    </div>
-                    <div class="bar-wrap">
-                        <div class="bar-fill hp" id="hp-bar" style="width: 100%;"></div>
                     </div>
                     <div class="bar-wrap" style="height: 6px; margin: 0;">
                         <div class="bar-fill xp" id="xp-bar" style="width: 0%;"></div>

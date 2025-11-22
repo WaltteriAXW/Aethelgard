@@ -20,8 +20,10 @@ export class Player extends Entity {
         this.comboTimer = 0;
 
         this.stats = {
-            hp: 100,
-            maxHp: 100,
+            hp: CFG.PLAYER_START_HP,
+            maxHp: CFG.PLAYER_START_HP,
+            mana: CFG.PLAYER_START_MANA,
+            maxMana: CFG.PLAYER_START_MANA,
             xp: 0,
             level: 1
         };
@@ -194,7 +196,9 @@ export class Player extends Entity {
         this.stats.xp = 0;
         this.stats.level++;
         this.stats.maxHp += CFG.HP_PER_LEVEL;
+        this.stats.maxMana += CFG.MANA_PER_LEVEL;
         this.stats.hp = this.stats.maxHp;
+        this.stats.mana = this.stats.maxMana;
 
         audioSystem.sfx.levelUp();
 
@@ -239,28 +243,53 @@ export class Player extends Entity {
     }
 
     /**
-     * Update UI elements
+     * Update UI elements - Diablo-style orbs
      */
     updateUI() {
-        const hpBar = document.getElementById('hp-bar');
-        if (hpBar) {
-            hpBar.style.width = (this.stats.hp / this.stats.maxHp) * 100 + "%";
+        // Update Health Orb
+        const healthFill = document.getElementById('health-orb-fill');
+        const healthValue = document.getElementById('health-value');
+        const healthOrb = document.querySelector('.health-orb');
+
+        if (healthFill) {
+            const hpPercent = (this.stats.hp / this.stats.maxHp) * 100;
+            healthFill.style.height = hpPercent + "%";
         }
 
+        if (healthValue) {
+            healthValue.textContent = `${Math.ceil(this.stats.hp)}/${this.stats.maxHp}`;
+        }
+
+        // Low health warning glow
+        if (healthOrb) {
+            if (this.stats.hp < this.stats.maxHp * 0.25) {
+                healthOrb.classList.add('low-health');
+            } else {
+                healthOrb.classList.remove('low-health');
+            }
+        }
+
+        // Update Mana Orb
+        const manaFill = document.getElementById('mana-orb-fill');
+        const manaValue = document.getElementById('mana-value');
+
+        if (manaFill) {
+            const manaPercent = (this.stats.mana / this.stats.maxMana) * 100;
+            manaFill.style.height = manaPercent + "%";
+        }
+
+        if (manaValue) {
+            manaValue.textContent = `${Math.ceil(this.stats.mana)}/${this.stats.maxMana}`;
+        }
+
+        // Update XP bar
         const xpBar = document.getElementById('xp-bar');
         if (xpBar) {
             const xpRequired = this.stats.level * CFG.XP_PER_LEVEL;
             xpBar.style.width = (this.stats.xp / xpRequired) * 100 + "%";
         }
 
-        // Update HP bar glow effect when low
-        const hpWrap = document.querySelector('.bar-wrap');
-        if (hpWrap && this.stats.hp < this.stats.maxHp * 0.25) {
-            hpWrap.classList.add('low-hp');
-        } else if (hpWrap) {
-            hpWrap.classList.remove('low-hp');
-        }
-
+        // Update level text
         const levelText = document.getElementById('lvl-txt');
         if (levelText) {
             levelText.innerText = "LVL " + this.stats.level;
