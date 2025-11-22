@@ -6,11 +6,15 @@
     <meta name="description" content="Aethelgard: Daybreak Edition - A retro browser RPG with procedural generation and combo combat">
     <meta name="keywords" content="rpg, game, browser game, retro, pixel art, javascript">
     <meta name="author" content="Aethelgard Team">
+    <meta name="theme-color" content="#8ecae6">
 
     <title>Aethelgard: Daybreak Edition</title>
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
@@ -44,6 +48,11 @@
                 <div class="quest-box" id="quest-disp">
                     Initializing System...
                 </div>
+            </div>
+
+            <!-- Minimap -->
+            <div class="minimap-container">
+                <canvas id="minimap" width="150" height="150"></canvas>
             </div>
         </div>
 
@@ -81,5 +90,20 @@
 
     <!-- Game Scripts (ES6 Modules) -->
     <script type="module" src="src/js/game.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('[SW] Registered successfully:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('[SW] Registration failed:', error);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>

@@ -10,6 +10,8 @@ import { input } from './input.js';
 import { MapSystem } from './map.js';
 import { Player } from './entities/player.js';
 import { Enemy } from './entities/enemy.js';
+import { Wraith } from './entities/wraith.js';
+import { Golem } from './entities/golem.js';
 import { QuestSystem } from './quest.js';
 
 export class Game {
@@ -18,6 +20,8 @@ export class Game {
         this.ctx = null;
         this.lightCanvas = null;
         this.lightCtx = null;
+        this.minimapCanvas = null;
+        this.minimapCtx = null;
 
         this.map = null;
         this.player = null;
@@ -62,6 +66,13 @@ export class Game {
         this.lightCanvas.height = CFG.H;
         this.lightCtx = this.lightCanvas.getContext('2d');
 
+        // Setup minimap
+        this.minimapCanvas = document.getElementById('minimap');
+        if (this.minimapCanvas) {
+            this.minimapCtx = this.minimapCanvas.getContext('2d');
+            this.minimapCtx.imageSmoothingEnabled = false;
+        }
+
         // Generate map
         this.map = new MapSystem(CFG.MAP_WIDTH, CFG.MAP_HEIGHT);
         const startPos = this.map.generate();
@@ -96,7 +107,22 @@ export class Game {
                 distance: CFG.ENEMY_SPAWN_MIN_DISTANCE
             });
 
-            this.entities.push(new Enemy(pos.x, pos.y));
+            // Spawn different enemy types with weighted distribution
+            const roll = Math.random();
+            let enemy;
+
+            if (roll < 0.6) {
+                // 60% Skeletons (basic)
+                enemy = new Enemy(pos.x, pos.y);
+            } else if (roll < 0.85) {
+                // 25% Wraiths (fast)
+                enemy = new Wraith(pos.x, pos.y);
+            } else {
+                // 15% Golems (tank)
+                enemy = new Golem(pos.x, pos.y);
+            }
+
+            this.entities.push(enemy);
         }
     }
 
@@ -205,6 +231,9 @@ export class Game {
 
         // Draw lighting overlay
         this.drawLighting(cameraX, cameraY);
+
+        // Draw minimap
+        this.drawMinimap();
     }
 
     /**
@@ -261,6 +290,61 @@ export class Game {
         this.lightCtx.beginPath();
         this.lightCtx.arc(x, y, radius, 0, Math.PI * 2);
         this.lightCtx.fill();
+    }
+
+    /**
+     * Draw the minimap
+     */
+    drawMinimap() {
+        if (!this.minimapCtx || !this.map) return;
+
+        const mmSize = 150; // Minimap size in pixels
+        const scale = mmSize / Math.max(this.map.width, this.map.height);
+
+        // Clear minimap
+        this.minimapCtx.fillStyle = '#1a1c23';
+        this.minimapCtx.fillRect(0, 0, mmSize, mmSize);
+
+        // Draw map tiles
+        for (let y = 0; y < this.map.height; y++) {
+            for (let x = 0; x < this.map.width; x++) {
+                const tile = this.map.get(x, y);
+                const mmX = Math.floor(x * scale);
+                const mmY = Math.floor(y * scale);
+                const tileSize = Math.max(1, Math.ceil(scale));
+
+                if (tile === this.map.TILE_FLOOR) {
+                    this.minimapCtx.fillStyle = '#6c8c4a';
+                    this.minimapCtx.fillRect(mmX, mmY, tileSize, tileSize);
+                } else if (tile === this.map.TILE_WALL) {
+                    this.minimapCtx.fillStyle = '#3a4a20';
+                    this.minimapCtx.fillRect(mmX, mmY, tileSize, tileSize);
+                }
+            }
+        }
+
+        // Draw enemies
+        this.entities.forEach(entity => {
+            if (entity === this.player) return;
+
+            const mmX = Math.floor((entity.x / CFG.TILE) * scale);
+            const mmY = Math.floor((entity.y / CFG.TILE) * scale);
+
+            this.minimapCtx.fillStyle = '#e63946';
+            this.minimapCtx.fillRect(mmX - 1, mmY - 1, 2, 2);
+        });
+
+        // Draw player
+        const playerMmX = Math.floor((this.player.x / CFG.TILE) * scale);
+        const playerMmY = Math.floor((this.player.y / CFG.TILE) * scale);
+
+        this.minimapCtx.fillStyle = '#ffb703';
+        this.minimapCtx.fillRect(playerMmX - 1, playerMmY - 1, 3, 3);
+
+        // Draw border
+        this.minimapCtx.strokeStyle = '#8ecae6';
+        this.minimapCtx.lineWidth = 1;
+        this.minimapCtx.strokeRect(0.5, 0.5, mmSize - 1, mmSize - 1);
     }
 
     /**

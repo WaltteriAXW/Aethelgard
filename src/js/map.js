@@ -1,9 +1,10 @@
 /**
  * Map System
- * Procedural map generation using drunkard's walk algorithm
+ * Enhanced procedural map generation using SimplexNoise and cellular automata
  */
 
 import { CFG } from './config.js';
+import { SimplexNoise } from './simplex-noise.js';
 
 export class MapSystem {
     constructor(width, height) {
@@ -18,39 +19,42 @@ export class MapSystem {
     }
 
     /**
-     * Generate a procedural map using drunkard's walk
+     * Generate a procedural map using SimplexNoise and cellular automata
      * @returns {Object} Starting position {x, y}
      */
     generate() {
+        const noise = new SimplexNoise();
         this.data.fill(this.TILE_VOID);
 
-        // Start from center
-        let x = Math.floor(this.width / 2);
-        let y = Math.floor(this.height / 2);
-        let floorsCreated = 0;
-        const targetFloors = (this.width * this.height) * CFG.MAP_FILL_RATIO;
+        // Phase 1: Generate base terrain with noise
+        const scale = 0.08; // Lower = more zoomed out
+        const threshold = 0.1; // Adjust for more/less open space
 
-        // Random walk to create floor tiles
-        while (floorsCreated < targetFloors) {
-            this.set(x, y, this.TILE_FLOOR);
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                // Use octave noise for more organic patterns
+                const value = noise.octaveNoise2D(x * scale, y * scale, 3, 0.5);
 
-            // Random direction
-            const direction = Math.floor(Math.random() * 4);
-            if (direction === 0) y--;
-            else if (direction === 1) y++;
-            else if (direction === 2) x--;
-            else x++;
-
-            // Keep within bounds with padding
-            x = Math.max(2, Math.min(this.width - 3, x));
-            y = Math.max(2, Math.min(this.height - 3, y));
-
-            if (this.get(x, y) === this.TILE_VOID) {
-                floorsCreated++;
+                // Create floor where noise is above threshold
+                if (value > threshold) {
+                    this.set(x, y, this.TILE_FLOOR);
+                }
             }
         }
 
-        // Place walls around floor tiles
+        // Phase 2: Cellular automata smoothing (makes caves more natural)
+        this.smoothCaves(2);
+
+        // Phase 3: Add some rooms for variety
+        this.addRooms(3);
+
+        // Phase 4: Ensure center is walkable
+        this.ensureCenterOpen();
+
+        // Phase 5: Remove isolated areas
+        this.removeIsolated();
+
+        // Phase 6: Place walls around floor tiles
         this.generateWalls();
 
         // Return starting position (center in pixels)
@@ -58,6 +62,115 @@ export class MapSystem {
             x: Math.floor(this.width / 2) * CFG.TILE,
             y: Math.floor(this.height / 2) * CFG.TILE
         };
+    }
+
+    /**
+     * Smooth caves using cellular automata
+     * @param {number} iterations - Number of smoothing passes
+     */
+    smoothCaves(iterations) {
+        for (let iter = 0; iter < iterations; iter++) {
+            const newData = new Uint8Array(this.data);
+
+            for (let y = 1; y < this.height - 1; y++) {
+                for (let x = 1; x < this.width - 1; x++) {
+                    // Count floor neighbors
+                    let floorCount = 0;
+                    for (let dy = -1; dy <= 1; dy++) {
+                        for (let dx = -1; dx <= 1; dx++) {
+                            if (this.get(x + dx, y + dy) === this.TILE_FLOOR) {
+                                floorCount++;
+                            }
+                        }
+                    }
+
+                    // Apply rules: if 5+ neighbors are floor, become floor
+                    if (floorCount >= 5) {
+                        newData[y * this.width + x] = this.TILE_FLOOR;
+                    } else if (floorCount <= 3) {
+                        newData[y * this.width + x] = this.TILE_VOID;
+                    }
+                }
+            }
+
+            this.data = newData;
+        }
+    }
+
+    /**
+     * Add rectangular rooms for variety
+     * @param {number} count - Number of rooms to add
+     */
+    addRooms(count) {
+        for (let i = 0; i < count; i++) {
+            const roomW = 4 + Math.floor(Math.random() * 6);
+            const roomH = 4 + Math.floor(Math.random() * 6);
+            const roomX = 3 + Math.floor(Math.random() * (this.width - roomW - 6));
+            const roomY = 3 + Math.floor(Math.random() * (this.height - roomH - 6));
+
+            // Carve out room
+            for (let y = roomY; y < roomY + roomH; y++) {
+                for (let x = roomX; x < roomX + roomW; x++) {
+                    this.set(x, y, this.TILE_FLOOR);
+                }
+            }
+        }
+    }
+
+    /**
+     * Ensure center area is open
+     */
+    ensureCenterOpen() {
+        const cx = Math.floor(this.width / 2);
+        const cy = Math.floor(this.height / 2);
+        const radius = 3;
+
+        for (let y = cy - radius; y <= cy + radius; y++) {
+            for (let x = cx - radius; x <= cx + radius; x++) {
+                this.set(x, y, this.TILE_FLOOR);
+            }
+        }
+    }
+
+    /**
+     * Remove small isolated floor regions (flood fill)
+     */
+    removeIsolated() {
+        const visited = new Uint8Array(this.width * this.height);
+        const cx = Math.floor(this.width / 2);
+        const cy = Math.floor(this.height / 2);
+
+        // Flood fill from center to mark main area
+        const queue = [[cx, cy]];
+        visited[cy * this.width + cx] = 1;
+
+        while (queue.length > 0) {
+            const [x, y] = queue.shift();
+
+            // Check 4 directions
+            const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+            for (const [dx, dy] of dirs) {
+                const nx = x + dx;
+                const ny = y + dy;
+                const idx = ny * this.width + nx;
+
+                if (nx >= 0 && nx < this.width && ny >= 0 && ny < this.height &&
+                    !visited[idx] && this.get(nx, ny) === this.TILE_FLOOR) {
+                    visited[idx] = 1;
+                    queue.push([nx, ny]);
+                }
+            }
+        }
+
+        // Remove unvisited floor tiles (isolated areas)
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                const idx = y * this.width + x;
+                if (this.get(x, y) === this.TILE_FLOOR && !visited[idx]) {
+                    this.set(x, y, this.TILE_VOID);
+                }
+            }
+        }
     }
 
     /**

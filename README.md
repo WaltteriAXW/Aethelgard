@@ -8,13 +8,19 @@ A retro-styled browser-based RPG featuring procedural generation, combo combat s
 
 ## ✨ Features
 
-- **🗺️ Procedural Map Generation**: Every playthrough features a unique dungeon layout using the drunkard's walk algorithm
-- **⚔️ Combo Combat System**: Chain attacks together for increased damage
-- **💨 Dash Mechanic**: Quick dodge and repositioning ability
-- **🌅 Dynamic Lighting**: Beautiful dusk-style illumination system
+- **🗺️ Advanced Procedural Generation**: Organic cave-like dungeons using SimplexNoise and cellular automata
+- **⚔️ Combo Combat System**: Chain attacks together for up to 3x damage multiplier
+- **💨 Dash Mechanic**: Quick dodge with invulnerability frames
+- **👾 Multiple Enemy Types**:
+  - **Skeletons** - Balanced enemies
+  - **Wraiths** - Fast, low HP, dash attacks
+  - **Golems** - Slow, tanky, heavy damage
+- **🗺️ Real-Time Minimap**: Track enemies and navigate the ruins
+- **🌅 Dynamic Lighting**: Beautiful dusk-style illumination system with radial gradients
 - **🎵 Procedural Audio**: All sound effects generated in real-time using Web Audio API
-- **📱 Mobile Support**: Touch controls for mobile and tablet devices
-- **🎮 Retro Aesthetics**: Pixel art graphics with a nostalgic feel
+- **📱 Mobile Support**: Full touch controls for mobile and tablet devices
+- **💾 PWA Support**: Install as an app, works offline
+- **🎮 Retro Aesthetics**: Hand-crafted pixel art sprites with nostalgic feel
 
 ## 🎮 How to Play
 
@@ -32,18 +38,23 @@ A retro-styled browser-based RPG featuring procedural generation, combo combat s
 
 ### Gameplay
 
-1. Explore the procedurally generated ruins
-2. Defeat skeleton enemies using your combat abilities
-3. Collect experience orbs to level up
+1. Explore the procedurally generated ruins with the minimap
+2. Battle three types of enemies - Skeletons, Wraiths, and Golems
+3. Collect experience orbs to level up and grow stronger
 4. Complete the quest: Purge the Ruins (defeat 10 enemies)
-5. Master the combo system for maximum damage
+5. Master the combo system for up to 3x damage
+6. Use the minimap to track remaining enemies
 
 ### Combat Tips
 
-- Build up combos by attacking consecutively (up to 3x combo)
-- The third hit in a combo deals bonus damage and has a special effect
-- Use dash to avoid enemy attacks (you're invulnerable while dashing)
-- Combine dash with attacks for tactical positioning
+- **Combo System**: Build up combos by attacking consecutively (up to 3x damage multiplier)
+- **Finishing Blow**: The third hit in a combo deals massive damage with a special effect
+- **Dash Invincibility**: You're invulnerable during dash - use it to avoid attacks
+- **Enemy Strategies**:
+  - **Wraiths**: Fast and aggressive - bait their dash then counterattack
+  - **Golems**: Slow but deadly - keep your distance and use hit-and-run tactics
+  - **Skeletons**: Balanced enemies - perfect for practicing combos
+- **Minimap Awareness**: Check the minimap to avoid being surrounded
 
 ## 🚀 Getting Started
 
@@ -88,7 +99,10 @@ Visit the [live demo](#) to play immediately in your browser!
 ```
 Aethelgard/
 ├── index.html              # Main HTML file
+├── manifest.json           # PWA manifest
+├── sw.js                   # Service worker for offline support
 ├── README.md               # Project documentation
+├── CONTRIBUTING.md         # Contribution guidelines
 ├── LICENSE                 # MIT License
 ├── .gitignore             # Git ignore rules
 ├── src/
@@ -96,16 +110,19 @@ Aethelgard/
 │   │   └── style.css      # All game styles
 │   └── js/
 │       ├── config.js       # Game configuration
-│       ├── audio.js        # Audio system
+│       ├── audio.js        # Procedural audio system
 │       ├── graphics.js     # Sprite generation
-│       ├── input.js        # Input handling
-│       ├── map.js          # Map generation
+│       ├── input.js        # Input handling (keyboard + touch)
+│       ├── map.js          # Advanced map generation
+│       ├── simplex-noise.js # Noise generation library
 │       ├── quest.js        # Quest system
-│       ├── game.js         # Main game loop
+│       ├── game.js         # Main game loop & minimap
 │       ├── entities/
 │       │   ├── entity.js   # Base entity class
 │       │   ├── player.js   # Player character
-│       │   ├── enemy.js    # Enemy AI
+│       │   ├── enemy.js    # Base enemy (Skeleton)
+│       │   ├── wraith.js   # Fast enemy type
+│       │   ├── golem.js    # Tank enemy type
 │       │   └── loot.js     # Collectibles
 │       └── particles/
 │           └── particles.js # Visual effects
@@ -123,10 +140,12 @@ Aethelgard/
 ### Key Systems
 
 #### Map Generation
-Uses a drunkard's walk algorithm to create organic, cave-like dungeons:
-- Randomly walks through a grid creating floor tiles
-- Automatically generates walls around floor areas
-- Ensures playable, connected spaces
+Advanced multi-phase procedural generation:
+- **SimplexNoise**: Creates organic base terrain with octave layering
+- **Cellular Automata**: Smooths caves for natural appearance
+- **Room Carving**: Adds structured areas for variety
+- **Flood Fill**: Removes isolated regions, ensures connectivity
+- **Wall Generation**: Automatic wall placement around walkable areas
 
 #### Combat System
 - Hit detection using distance-based collision

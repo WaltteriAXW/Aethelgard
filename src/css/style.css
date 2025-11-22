@@ -127,6 +127,24 @@ canvas {
     text-shadow: 0 0 5px var(--ui-brd);
 }
 
+/* Minimap */
+.minimap-container {
+    position: absolute;
+    bottom: 25px;
+    left: 25px;
+    background: var(--ui-bg);
+    border: 2px solid var(--ui-brd);
+    padding: 8px;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
+}
+
+#minimap {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
 /* Touch Controls */
 .touch-overlay {
     position: absolute;

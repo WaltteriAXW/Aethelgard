@@ -21,6 +21,18 @@ export class Graphics {
                 b: '#e1e5f2',  // Bone white
                 r: '#e63946'   // Red eyes
             },
+            wraith: {
+                a: '#1d1d3a',  // Dark purple shadow
+                b: '#6a4c93',  // Purple body
+                e: '#b185db',  // Light purple
+                r: '#ff006e'   // Pink eyes
+            },
+            golem: {
+                a: '#2f3e46',  // Dark rock
+                b: '#52796f',  // Medium rock
+                c: '#84a98c',  // Light rock
+                e: '#f77f00'   // Orange core/eyes
+            },
             loot: {
                 g: '#ffb703',  // Gold
                 w: '#fff'      // White shine
@@ -54,6 +66,34 @@ export class Graphics {
                 '..aabbbbaa......',
                 '...aa..aa.......',
                 '...a....a.......',
+                '..aa....aa......',
+                '................'
+            ],
+            wraith: [
+                '.....aaaa.......',
+                '....abbbba......',
+                '....abreeba.....',
+                '....abbbba......',
+                '...aabbbaa......',
+                '..aabbbbbaa.....',
+                '..abbebbea......',
+                '..aabbbaaa......',
+                '...aa.aa........',
+                '...a...a........',
+                '..aa...aa.......',
+                '................'
+            ],
+            golem: [
+                '....aaaaaa......',
+                '...abbbbba......',
+                '..abbcbcbba.....',
+                '..abceecba......',
+                '..abbccbbba.....',
+                '.abbbbbbbbba....',
+                '.abbbcccbbba....',
+                '..abbbbbbba.....',
+                '...aa..aa.......',
+                '...aa..aa.......',
                 '..aa....aa......',
                 '................'
             ],
