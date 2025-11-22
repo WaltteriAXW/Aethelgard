@@ -272,13 +272,20 @@ export class Game {
         this.ctx.translate(-cameraX, -cameraY);
 
         this.map.draw(this.ctx, { x: cameraX, y: cameraY });
+
+        // Draw floor reflections
+        this.drawFloorReflections(cameraX, cameraY);
+
         this.entities.forEach(entity => entity.draw(this.ctx));
         this.particles.forEach(particle => particle.draw(this.ctx));
 
         this.ctx.restore();
 
-        // TEMPORARILY DISABLED: Draw lighting overlay
-        // this.drawLighting(cameraX, cameraY);
+        // Draw atmospheric fog layers
+        this.drawAtmosphericFog(cameraX, cameraY);
+
+        // Draw subtle atmospheric lighting
+        this.drawAtmosphericLighting(cameraX, cameraY);
 
         // Draw minimap
         this.drawMinimap();
@@ -288,7 +295,257 @@ export class Game {
     }
 
     /**
-     * Draw lighting layer with bloom/glow effects
+     * Draw subtle atmospheric lighting for ambiance
+     * @param {number} cameraX - Camera X position
+     * @param {number} cameraY - Camera Y position
+     */
+    drawAtmosphericLighting(cameraX, cameraY) {
+        // Clear lighting canvas
+        this.lightCtx.clearRect(0, 0, CFG.W, CFG.H);
+        this.lightCtx.globalCompositeOperation = 'lighter';
+
+        // Subtle player aura (very soft glow)
+        const playerFlicker = 1 + Math.sin(this.lightFlicker) * 0.05;
+        const playerGradient = this.lightCtx.createRadialGradient(
+            this.player.x - cameraX + 16,
+            this.player.y - cameraY + 16,
+            0,
+            this.player.x - cameraX + 16,
+            this.player.y - cameraY + 16,
+            80 * playerFlicker
+        );
+        playerGradient.addColorStop(0, 'rgba(100, 150, 255, 0.15)');
+        playerGradient.addColorStop(0.5, 'rgba(70, 120, 200, 0.08)');
+        playerGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        this.lightCtx.fillStyle = playerGradient;
+        this.lightCtx.fillRect(0, 0, CFG.W, CFG.H);
+
+        // God rays and volumetric lighting from loot
+        this.entities.forEach(entity => {
+            if (entity.spriteKey === 'orb') {
+                const lootFlicker = 1 + Math.sin(this.lightFlicker * 2 + entity.x) * 0.12;
+                const lootX = entity.x - cameraX + 16;
+                const lootY = entity.y - cameraY + 16;
+
+                // Draw god rays (volumetric light beams)
+                this.lightCtx.save();
+                this.lightCtx.translate(lootX, lootY);
+
+                // Rotating rays
+                const rayCount = 8;
+                const rotation = this.lightFlicker * 0.5;
+
+                for (let i = 0; i < rayCount; i++) {
+                    const angle = (i / rayCount) * Math.PI * 2 + rotation;
+                    const rayLength = 80 + Math.sin(this.lightFlicker * 3 + i) * 20;
+
+                    const rayGradient = this.lightCtx.createLinearGradient(
+                        0, 0,
+                        Math.cos(angle) * rayLength,
+                        Math.sin(angle) * rayLength
+                    );
+                    rayGradient.addColorStop(0, 'rgba(255, 220, 100, 0.3)');
+                    rayGradient.addColorStop(0.5, 'rgba(255, 200, 80, 0.15)');
+                    rayGradient.addColorStop(1, 'rgba(255, 180, 60, 0)');
+
+                    this.lightCtx.fillStyle = rayGradient;
+                    this.lightCtx.beginPath();
+                    this.lightCtx.moveTo(0, 0);
+                    this.lightCtx.arc(0, 0, rayLength, angle - 0.15, angle + 0.15);
+                    this.lightCtx.closePath();
+                    this.lightCtx.fill();
+                }
+
+                this.lightCtx.restore();
+
+                // Bright core glow
+                const lootGradient = this.lightCtx.createRadialGradient(
+                    lootX, lootY, 0,
+                    lootX, lootY,
+                    80 * lootFlicker
+                );
+                lootGradient.addColorStop(0, 'rgba(255, 240, 120, 0.4)');
+                lootGradient.addColorStop(0.3, 'rgba(255, 220, 100, 0.25)');
+                lootGradient.addColorStop(0.6, 'rgba(255, 180, 60, 0.12)');
+                lootGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                this.lightCtx.fillStyle = lootGradient;
+                this.lightCtx.fillRect(0, 0, CFG.W, CFG.H);
+            }
+        });
+
+        // Enemy glows (very subtle)
+        this.entities.forEach(entity => {
+            const enemyFlicker = 1 + Math.sin(this.lightFlicker * 1.5 + entity.y) * 0.08;
+
+            if (entity.spriteKey === 'skel') {
+                const skelGradient = this.lightCtx.createRadialGradient(
+                    entity.x - cameraX + 16,
+                    entity.y - cameraY + 16,
+                    0,
+                    entity.x - cameraX + 16,
+                    entity.y - cameraY + 16,
+                    40 * enemyFlicker
+                );
+                skelGradient.addColorStop(0, 'rgba(255, 80, 80, 0.15)');
+                skelGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                this.lightCtx.fillStyle = skelGradient;
+                this.lightCtx.fillRect(0, 0, CFG.W, CFG.H);
+            } else if (entity.spriteKey === 'wraith') {
+                const wraithGradient = this.lightCtx.createRadialGradient(
+                    entity.x - cameraX + 16,
+                    entity.y - cameraY + 16,
+                    0,
+                    entity.x - cameraX + 16,
+                    entity.y - cameraY + 16,
+                    50 * enemyFlicker
+                );
+                wraithGradient.addColorStop(0, 'rgba(180, 100, 220, 0.18)');
+                wraithGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                this.lightCtx.fillStyle = wraithGradient;
+                this.lightCtx.fillRect(0, 0, CFG.W, CFG.H);
+            } else if (entity.spriteKey === 'golem') {
+                const golemGradient = this.lightCtx.createRadialGradient(
+                    entity.x - cameraX + 16,
+                    entity.y - cameraY + 16,
+                    0,
+                    entity.x - cameraX + 16,
+                    entity.y - cameraY + 16,
+                    45 * enemyFlicker
+                );
+                golemGradient.addColorStop(0, 'rgba(255, 150, 60, 0.2)');
+                golemGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                this.lightCtx.fillStyle = golemGradient;
+                this.lightCtx.fillRect(0, 0, CFG.W, CFG.H);
+            }
+        });
+
+        // Composite lighting layer with very subtle blur
+        this.ctx.save();
+        this.ctx.globalCompositeOperation = 'lighter';
+        this.ctx.filter = 'blur(8px)';
+        this.ctx.globalAlpha = 0.7;
+        this.ctx.drawImage(this.lightCanvas, 0, 0);
+        this.ctx.restore();
+    }
+
+    /**
+     * Draw floor reflections for wet stone effect
+     * @param {number} cameraX - Camera X position
+     * @param {number} cameraY - Camera Y position
+     */
+    drawFloorReflections(cameraX, cameraY) {
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.15;
+        this.ctx.globalCompositeOperation = 'lighter';
+
+        this.entities.forEach(entity => {
+            // Only reflect entities, not orbs
+            if (entity.spriteKey === 'orb') return;
+
+            const reflectX = entity.x + entity.w / 2;
+            const reflectY = entity.y + entity.h + 4; // Below entity
+
+            // Get reflection color based on entity type
+            let reflectColor;
+            switch(entity.spriteKey) {
+                case 'hero': reflectColor = '100, 150, 255'; break;
+                case 'skel': reflectColor = '240, 240, 230'; break;
+                case 'wraith': reflectColor = '180, 100, 220'; break;
+                case 'golem': reflectColor = '150, 150, 170'; break;
+                default: reflectColor = '200, 200, 200';
+            }
+
+            // Draw reflection as gradient ellipse
+            const reflectGradient = this.ctx.createRadialGradient(
+                reflectX, reflectY,
+                0,
+                reflectX, reflectY,
+                entity.w * 0.6
+            );
+            reflectGradient.addColorStop(0, `rgba(${reflectColor}, 0.4)`);
+            reflectGradient.addColorStop(0.5, `rgba(${reflectColor}, 0.2)`);
+            reflectGradient.addColorStop(1, `rgba(${reflectColor}, 0)`);
+
+            this.ctx.fillStyle = reflectGradient;
+            this.ctx.beginPath();
+            this.ctx.ellipse(
+                reflectX,
+                reflectY,
+                entity.w * 0.5,
+                entity.h * 0.3,
+                0, 0, Math.PI * 2
+            );
+            this.ctx.fill();
+        });
+
+        this.ctx.restore();
+    }
+
+    /**
+     * Draw atmospheric fog and particle layers
+     * @param {number} cameraX - Camera X position
+     * @param {number} cameraY - Camera Y position
+     */
+    drawAtmosphericFog(cameraX, cameraY) {
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.08;
+
+        // Multi-layer parallax fog
+        const fogTime = Date.now() * 0.0001;
+
+        // Layer 1: Slow drifting fog (near)
+        for (let i = 0; i < 6; i++) {
+            const fogX = (cameraX * 0.1 + fogTime * 30 + i * 200) % (CFG.W + 200) - 100;
+            const fogY = (cameraY * 0.1 + Math.sin(fogTime + i) * 50 + i * 100) % (CFG.H + 100) - 50;
+
+            const fogGradient = this.ctx.createRadialGradient(
+                fogX, fogY, 0,
+                fogX, fogY, 150
+            );
+            fogGradient.addColorStop(0, 'rgba(200, 210, 220, 0.15)');
+            fogGradient.addColorStop(0.5, 'rgba(180, 190, 200, 0.08)');
+            fogGradient.addColorStop(1, 'rgba(160, 170, 180, 0)');
+
+            this.ctx.fillStyle = fogGradient;
+            this.ctx.fillRect(0, 0, CFG.W, CFG.H);
+        }
+
+        // Layer 2: Faster fog (mid)
+        this.ctx.globalAlpha = 0.05;
+        for (let i = 0; i < 4; i++) {
+            const fogX = (cameraX * 0.15 + fogTime * 50 + i * 250) % (CFG.W + 250) - 125;
+            const fogY = (cameraY * 0.15 + Math.cos(fogTime * 1.5 + i) * 60 + i * 120) % (CFG.H + 120) - 60;
+
+            const fogGradient = this.ctx.createRadialGradient(
+                fogX, fogY, 0,
+                fogX, fogY, 120
+            );
+            fogGradient.addColorStop(0, 'rgba(210, 220, 230, 0.2)');
+            fogGradient.addColorStop(0.5, 'rgba(190, 200, 210, 0.1)');
+            fogGradient.addColorStop(1, 'rgba(170, 180, 190, 0)');
+
+            this.ctx.fillStyle = fogGradient;
+            this.ctx.fillRect(0, 0, CFG.W, CFG.H);
+        }
+
+        // Floating dust particles
+        this.ctx.globalAlpha = 0.3;
+        for (let i = 0; i < 30; i++) {
+            const dustX = (cameraX * 0.2 + fogTime * 15 + i * 40 + Math.sin(fogTime * 2 + i) * 20) % CFG.W;
+            const dustY = (cameraY * 0.2 + fogTime * 10 + i * 30 + Math.cos(fogTime * 1.5 + i) * 15) % CFG.H;
+            const dustSize = 1 + Math.sin(fogTime * 3 + i) * 0.5;
+
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            this.ctx.beginPath();
+            this.ctx.arc(dustX, dustY, dustSize, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
+
+        this.ctx.restore();
+    }
+
+    /**
+     * Draw lighting layer with bloom/glow effects (OLD - for reference)
      * @param {number} cameraX - Camera X position
      * @param {number} cameraY - Camera Y position
      */
@@ -434,11 +691,11 @@ export class Game {
         const mmSize = 150; // Minimap size in pixels
         const scale = mmSize / Math.max(this.map.width, this.map.height);
 
-        // Clear minimap
-        this.minimapCtx.fillStyle = '#1a1c23';
+        // Clear minimap with dark background
+        this.minimapCtx.fillStyle = '#1a1c1a';
         this.minimapCtx.fillRect(0, 0, mmSize, mmSize);
 
-        // Draw map tiles
+        // Draw map tiles with natural green tones
         for (let y = 0; y < this.map.height; y++) {
             for (let x = 0; x < this.map.width; x++) {
                 const tile = this.map.get(x, y);
@@ -447,10 +704,10 @@ export class Game {
                 const tileSize = Math.max(1, Math.ceil(scale));
 
                 if (tile === this.map.TILE_FLOOR) {
-                    this.minimapCtx.fillStyle = '#3e3e5a';  // Cool purple floor
+                    this.minimapCtx.fillStyle = '#6b8a5f';  // Moss green floor
                     this.minimapCtx.fillRect(mmX, mmY, tileSize, tileSize);
                 } else if (tile === this.map.TILE_WALL) {
-                    this.minimapCtx.fillStyle = '#2a2a3e';  // Dark blue wall
+                    this.minimapCtx.fillStyle = '#4a5a3d';  // Dark moss wall
                     this.minimapCtx.fillRect(mmX, mmY, tileSize, tileSize);
                 }
             }
@@ -554,52 +811,125 @@ export class Game {
     }
 
     /**
-     * Draw post-processing effects for "trailer look"
+     * Draw post-processing effects for AAA quality visuals
      */
     drawPostProcessing() {
-        // TEMPORARILY DISABLED: Enhanced vignette effect
-        // const vignetteGradient = this.ctx.createRadialGradient(
-        //     CFG.W / 2, CFG.H / 2, CFG.H * 0.2,
-        //     CFG.W / 2, CFG.H / 2, CFG.H * 0.9
-        // );
-        // vignetteGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-        // vignetteGradient.addColorStop(0.6, 'rgba(0, 0, 0, 0.2)');
-        // vignetteGradient.addColorStop(1, 'rgba(10, 5, 20, 0.8)');
+        // Motion blur based on player velocity
+        const playerSpeed = Math.hypot(this.player.vx, this.player.vy);
+        if (playerSpeed > 150) {
+            const blurIntensity = Math.min((playerSpeed - 150) / 500, 0.3);
+            const angle = Math.atan2(this.player.vy, this.player.vx);
 
-        // this.ctx.fillStyle = vignetteGradient;
-        // this.ctx.fillRect(0, 0, CFG.W, CFG.H);
+            this.ctx.save();
+            this.ctx.globalAlpha = blurIntensity;
+            this.ctx.globalCompositeOperation = 'source-over';
 
-        // TEMPORARILY DISABLED: Subtle scanline effect
-        // this.ctx.globalAlpha = 0.03;
-        // for (let y = 0; y < CFG.H; y += 3) {
-        //     this.ctx.fillStyle = '#000';
-        //     this.ctx.fillRect(0, y, CFG.W, 1);
-        // }
-        // this.ctx.globalAlpha = 1;
+            // Draw multiple offset frames for motion blur
+            for (let i = 1; i <= 3; i++) {
+                const offsetX = -Math.cos(angle) * i * 4;
+                const offsetY = -Math.sin(angle) * i * 4;
+                const alpha = blurIntensity * (1 - i / 4);
 
-        // Screen flash (on hits) - brighter and more impactful
+                this.ctx.globalAlpha = alpha;
+                this.ctx.drawImage(
+                    this.canvas,
+                    offsetX, offsetY,
+                    CFG.W, CFG.H,
+                    0, 0,
+                    CFG.W, CFG.H
+                );
+            }
+
+            this.ctx.restore();
+        }
+
+        // Film grain for cinematic feel
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.035;
+        const grainData = this.ctx.createImageData(CFG.W, CFG.H);
+        for (let i = 0; i < grainData.data.length; i += 4) {
+            const grain = Math.random() * 255;
+            grainData.data[i] = grain;
+            grainData.data[i + 1] = grain;
+            grainData.data[i + 2] = grain;
+            grainData.data[i + 3] = 255;
+        }
+        this.ctx.putImageData(grainData, 0, 0);
+        this.ctx.restore();
+
+        // Screen flash (on hits) - with color variation
         if (this.screenFlash > 0) {
-            this.ctx.fillStyle = `rgba(255, 255, 255, ${this.screenFlash * 0.5})`;
+            const flashColor = this.screenFlash > 0.7 ?
+                `rgba(255, 200, 100, ${this.screenFlash * 0.6})` : // Warm flash for big hits
+                `rgba(255, 255, 255, ${this.screenFlash * 0.4})`; // White flash for normal hits
+
+            this.ctx.fillStyle = flashColor;
             this.ctx.fillRect(0, 0, CFG.W, CFG.H);
         }
 
         // Enhanced chromatic aberration (on heavy hits)
         if (this.chromaticAberration > 0) {
-            const aberrationOffset = this.chromaticAberration * 3;
+            const aberrationOffset = this.chromaticAberration * 4;
 
             this.ctx.save();
             this.ctx.globalCompositeOperation = 'screen';
-            this.ctx.globalAlpha = this.chromaticAberration * 0.3;
 
-            // Red channel offset
-            this.ctx.fillStyle = '#ff0000';
-            this.ctx.fillRect(-aberrationOffset, 0, CFG.W, CFG.H);
+            // Radial chromatic aberration from center
+            const centerX = CFG.W / 2;
+            const centerY = CFG.H / 2;
 
-            // Cyan channel offset
-            this.ctx.fillStyle = '#00ffff';
-            this.ctx.fillRect(aberrationOffset, 0, CFG.W, CFG.H);
+            // Red channel
+            this.ctx.globalAlpha = this.chromaticAberration * 0.4;
+            const redGradient = this.ctx.createRadialGradient(
+                centerX + aberrationOffset, centerY,
+                0,
+                centerX + aberrationOffset, centerY,
+                CFG.W
+            );
+            redGradient.addColorStop(0, 'rgba(255, 0, 0, 0.6)');
+            redGradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+            this.ctx.fillStyle = redGradient;
+            this.ctx.fillRect(0, 0, CFG.W, CFG.H);
+
+            // Cyan channel
+            const cyanGradient = this.ctx.createRadialGradient(
+                centerX - aberrationOffset, centerY,
+                0,
+                centerX - aberrationOffset, centerY,
+                CFG.W
+            );
+            cyanGradient.addColorStop(0, 'rgba(0, 255, 255, 0.6)');
+            cyanGradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+            this.ctx.fillStyle = cyanGradient;
+            this.ctx.fillRect(0, 0, CFG.W, CFG.H);
 
             this.ctx.restore();
+        }
+
+        // Radial blur on powerful attacks (if camera shake is high)
+        if (this.camera.shake > 0.5) {
+            this.ctx.save();
+            this.ctx.globalAlpha = this.camera.shake * 0.2;
+            this.ctx.filter = `blur(${this.camera.shake * 2}px)`;
+            this.ctx.drawImage(this.canvas, 0, 0);
+            this.ctx.restore();
+        }
+
+        // Damage vignette (when player HP is low)
+        if (this.player.hp < this.player.maxHp * 0.3) {
+            const healthPercent = this.player.hp / this.player.maxHp;
+            const vignetteIntensity = (0.3 - healthPercent) / 0.3;
+
+            const damageVignette = this.ctx.createRadialGradient(
+                CFG.W / 2, CFG.H / 2, CFG.H * 0.3,
+                CFG.W / 2, CFG.H / 2, CFG.H * 0.8
+            );
+            damageVignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+            damageVignette.addColorStop(0.7, `rgba(80, 0, 0, ${vignetteIntensity * 0.2})`);
+            damageVignette.addColorStop(1, `rgba(120, 0, 0, ${vignetteIntensity * 0.5})`);
+
+            this.ctx.fillStyle = damageVignette;
+            this.ctx.fillRect(0, 0, CFG.W, CFG.H);
         }
 
         // Fade in transition
