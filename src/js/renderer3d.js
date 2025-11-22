@@ -86,8 +86,8 @@ export class Renderer3D {
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        // Add subtle atmospheric fog for depth (very light - won't darken scene)
-        this.scene.fog = new THREE.FogExp2(0x87CEEB, 0.008); // Sky blue fog, very light
+        // NO FOG - completely clear visibility
+        this.scene.fog = null;
 
         // Initialize materials
         this.initMaterials();
@@ -260,17 +260,17 @@ export class Renderer3D {
         const grassTexture = this.generateGrassTexture();
         const stoneNormalMap = this.generateStoneNormalMap();
 
-        // Floor material - Realistic grass texture
+        // Floor material - Realistic grass texture (bright, no haze)
         this.materials.floor = new THREE.MeshStandardMaterial({
             map: grassTexture,
             roughness: 0.9,
             metalness: 0.0,
             flatShading: false,
-            emissive: 0x2a3a2a, // Slight self-illumination for visibility
-            emissiveIntensity: 0.2
+            emissive: 0x3a4a3a, // Self-illumination for clear visibility
+            emissiveIntensity: 0.4
         });
 
-        // Wall material - Realistic stone texture with normal map
+        // Wall material - Realistic stone texture with normal map (bright, no haze)
         this.materials.wall = new THREE.MeshStandardMaterial({
             map: stoneTexture,
             normalMap: stoneNormalMap,
@@ -278,8 +278,8 @@ export class Renderer3D {
             roughness: 0.8,
             metalness: 0.0,
             flatShading: false,
-            emissive: 0x1a1a1a, // Slight self-illumination for visibility
-            emissiveIntensity: 0.2
+            emissive: 0x2a2a2a, // Self-illumination for clear visibility
+            emissiveIntensity: 0.4
         });
 
         // Player material - BRIGHT blue armor with strong glow
@@ -329,15 +329,15 @@ export class Renderer3D {
     }
 
     /**
-     * Setup realistic outdoor lighting (Skyrim-style)
+     * Setup bright outdoor lighting (Skyrim-style, no haze)
      */
     setupLighting() {
-        // Natural outdoor ambient light (bright but not extreme)
-        this.lights.ambient = new THREE.AmbientLight(0xffffff, 1.5);
+        // Very bright ambient light (eliminates dark areas)
+        this.lights.ambient = new THREE.AmbientLight(0xffffff, 2.0);
         this.scene.add(this.lights.ambient);
 
-        // Main sun (DirectionalLight from above)
-        const sunLight = new THREE.DirectionalLight(0xffffee, 1.8);
+        // Main sun (DirectionalLight from above) - VERY BRIGHT
+        const sunLight = new THREE.DirectionalLight(0xffffee, 2.5);
         sunLight.position.set(20, 40, 15);
         sunLight.castShadow = true;
         sunLight.shadow.mapSize.width = 2048;
@@ -350,20 +350,20 @@ export class Renderer3D {
         sunLight.shadow.camera.bottom = -30;
         this.scene.add(sunLight);
 
-        // Player torch/lantern (subtle, for indoor areas)
-        this.lights.player = new THREE.PointLight(0xffaa55, 8, 60, 2);
+        // Player torch/lantern (bright for visibility)
+        this.lights.player = new THREE.PointLight(0xffaa55, 15, 80, 2);
         this.lights.player.position.set(0, 5, 0);
         this.lights.player.castShadow = true;
         this.lights.player.shadow.mapSize.width = 1024;
         this.lights.player.shadow.mapSize.height = 1024;
         this.scene.add(this.lights.player);
 
-        // Fill light (simulates sky bounce light)
-        const fillLight = new THREE.DirectionalLight(0x6699cc, 0.6);
+        // Strong fill light (eliminates shadows)
+        const fillLight = new THREE.DirectionalLight(0x6699cc, 1.2);
         fillLight.position.set(-15, 10, -10);
         this.scene.add(fillLight);
 
-        console.log('[Renderer3D] Realistic outdoor lighting setup complete:');
+        console.log('[Renderer3D] Bright outdoor lighting setup (no fog):');
         console.log(`- Ambient: ${this.lights.ambient.intensity}`);
         console.log(`- Sun: ${sunLight.intensity}`);
         console.log(`- Player torch: ${this.lights.player.intensity} (radius: ${this.lights.player.distance})`);
@@ -635,8 +635,8 @@ export class Renderer3D {
 
         // Subtle torch flicker for realism (Skyrim-style)
         if (this.lights.player) {
-            const baseIntensity = 8;
-            const flickerAmount = Math.sin(Date.now() * 0.003) * 0.3 + Math.random() * 0.2;
+            const baseIntensity = 15;
+            const flickerAmount = Math.sin(Date.now() * 0.003) * 0.5 + Math.random() * 0.3;
             this.lights.player.intensity = baseIntensity + flickerAmount;
         }
 
