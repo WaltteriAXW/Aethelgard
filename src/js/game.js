@@ -40,7 +40,7 @@ export class Game {
         this.lightFlicker = 0;
         this.screenFlash = 0;
         this.chromaticAberration = 0;
-        this.fadeIn = 1; // Start with black screen
+        this.fadeIn = 0; // Start visible (was 1, causing dark screen)
     }
 
     /**
@@ -94,6 +94,10 @@ export class Game {
         const selectedClass = window.selectedClass || 'WARRIOR';
         this.player = new Player(startPos.x, startPos.y, selectedClass);
         this.entities = [this.player];
+
+        // Initialize camera to player position to avoid dark screen on startup
+        this.camera.x = this.player.x - CFG.W / 2 + 16;
+        this.camera.y = this.player.y - CFG.H / 2 + 16;
 
         // Spawn enemies
         this.spawnEnemies(startPos);

@@ -44,8 +44,8 @@ export const CFG = {
 
     // DIABLO-LIKE LIGHTING SETTINGS
     DARKNESS_ENABLED: true,         // Enable fog of war
-    DARKNESS_OPACITY: 0.92,         // Near-total darkness (90%+ black)
-    VISION_RADIUS: 180,             // Player's vision circle (smaller = more claustrophobic)
+    DARKNESS_OPACITY: 0.75,         // Darkness overlay (reduced from 0.92 for better visibility)
+    VISION_RADIUS: 200,             // Player's vision circle (increased from 180 for better visibility)
     PLAYER_LIGHT_RADIUS: 150,       // Reduced light radius
     LOOT_LIGHT_RADIUS: 80,
     ENEMY_LIGHT_RADIUS: 40,
