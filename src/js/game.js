@@ -243,8 +243,8 @@ export class Game {
      * Render the game
      */
     render() {
-        // Clear background with cool dungeon atmosphere
-        this.ctx.fillStyle = '#1a1a28';  // Deep cool blue/purple
+        // Clear background
+        this.ctx.fillStyle = '#2b2d42';
         this.ctx.fillRect(0, 0, CFG.W, CFG.H);
 
         // Apply enhanced camera shake with directional component

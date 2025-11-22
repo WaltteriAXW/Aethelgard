@@ -7,34 +7,34 @@ export class Graphics {
     constructor() {
         this.cache = {};
 
-        // Color palettes with warm/cold contrast for "trailer look"
+        // Color palettes for different sprite types
         this.palettes = {
             hero: {
-                a: '#2a2a3e',  // Cool dark blue armor
+                a: '#1d3557',  // Armor blue
                 s: '#ffcb9a',  // Skin
-                c: '#3e3e5a',  // Cool purple cloth
-                h: '#00ffcc',  // Neon cyan highlights (magic)
-                x: '#ffaa00'   // Hot orange emblem
+                c: '#457b9d',  // Cape/cloth
+                h: '#f1faee',  // Highlights
+                x: '#ffb703'   // Emblem/accent
             },
             skel: {
-                a: '#2a2a3e',  // Cool shadow
+                a: '#1d3557',  // Shadow
                 b: '#e1e5f2',  // Bone white
-                r: '#ff0055'   // Vibrant red eyes
+                r: '#e63946'   // Red eyes
             },
             wraith: {
-                a: '#1d1d3a',  // Dark cool shadow
-                b: '#5a4c93',  // Rich purple body
-                e: '#b185db',  // Light purple aura
-                r: '#ff006e'   // Hot pink/magenta eyes
+                a: '#1d1d3a',  // Dark purple shadow
+                b: '#6a4c93',  // Purple body
+                e: '#b185db',  // Light purple
+                r: '#ff006e'   // Pink eyes
             },
             golem: {
-                a: '#2f3e46',  // Dark cool rock
-                b: '#52796f',  // Medium teal rock
-                c: '#6a9c89',  // Light cool rock
-                e: '#ffaa00'   // Hot orange core/eyes
+                a: '#2f3e46',  // Dark rock
+                b: '#52796f',  // Medium rock
+                c: '#84a98c',  // Light rock
+                e: '#f77f00'   // Orange core/eyes
             },
             loot: {
-                g: '#ffaa00',  // Hot orange gold
+                g: '#ffb703',  // Gold
                 w: '#fff'      // White shine
             }
         };
