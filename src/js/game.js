@@ -144,33 +144,43 @@ export class Game {
      * Continue initialization after renderer is set up
      */
     continueInit() {
+        console.log('[Game] continueInit() called - starting game setup...');
+
         // Setup minimap (2D for now, even in 3D mode)
         this.minimapCanvas = document.getElementById('minimap');
         if (this.minimapCanvas) {
             this.minimapCtx = this.minimapCanvas.getContext('2d');
             this.minimapCtx.imageSmoothingEnabled = false;
         }
+        console.log('[Game] Minimap setup complete');
 
         // Generate map
+        console.log('[Game] Generating map...');
         this.map = new MapSystem(CFG.MAP_WIDTH, CFG.MAP_HEIGHT);
         const startPos = this.map.generate();
+        console.log(`[Game] Map generated, start position: (${startPos.x}, ${startPos.y})`);
 
         // Generate 3D map if using 3D renderer
         if (this.use3D && this.renderer3d) {
+            console.log('[Game] Generating 3D map meshes...');
             this.renderer3d.generateMap(this.map);
         }
 
         // Create player with selected class
         const selectedClass = window.selectedClass || 'WARRIOR';
+        console.log(`[Game] Creating player with class: ${selectedClass}`);
         this.player = new Player(startPos.x, startPos.y, selectedClass);
         this.entities = [this.player];
 
         // Initialize camera to player position to avoid dark screen on startup
         this.camera.x = this.player.x - CFG.W / 2 + 16;
         this.camera.y = this.player.y - CFG.H / 2 + 16;
+        console.log(`[Game] Camera initialized at: (${this.camera.x}, ${this.camera.y})`);
 
         // Spawn enemies
+        console.log('[Game] Spawning enemies...');
         this.spawnEnemies(startPos);
+        console.log(`[Game] Spawned ${this.entities.length - 1} enemies`);
 
         // Initialize quest
         this.quest = new QuestSystem();
@@ -180,6 +190,7 @@ export class Game {
         this.state = 'PLAY';
         this.lastTime = 0;
 
+        console.log('[Game] ✅ Initialization complete! Starting game loop...');
         requestAnimationFrame((t) => this.loop(t));
     }
 
