@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Aethelgard: Daybreak Edition - A retro browser RPG with procedural generation and combo combat">
+    <meta name="keywords" content="rpg, game, browser game, retro, pixel art, javascript">
+    <meta name="author" content="Aethelgard Team">
+
+    <title>Aethelgard: Daybreak Edition</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="src/css/style.css">
+</head>
+<body>
+    <div id="game-frame">
+        <!-- Game Canvas -->
+        <canvas id="game"></canvas>
+
+        <!-- UI Layer -->
+        <div id="ui-layer">
+            <div class="hud-header">
+                <!-- Character Stats -->
+                <div class="char-card">
+                    <div class="stat-row">
+                        <span>ARCHITECT</span>
+                        <span id="lvl-txt">LVL 1</span>
+                    </div>
+                    <div class="bar-wrap">
+                        <div class="bar-fill hp" id="hp-bar" style="width: 100%;"></div>
+                    </div>
+                    <div class="bar-wrap" style="height: 6px; margin: 0;">
+                        <div class="bar-fill xp" id="xp-bar" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <!-- Quest Display -->
+                <div class="quest-box" id="quest-disp">
+                    Initializing System...
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Touch Controls -->
+        <div class="touch-overlay" id="mob-ctrl">
+            <!-- D-Pad -->
+            <div class="touch-zone d-pad">
+                <div class="d-btn du" data-k="ArrowUp"></div>
+                <div class="d-btn dd" data-k="ArrowDown"></div>
+                <div class="d-btn dl" data-k="ArrowLeft"></div>
+                <div class="d-btn dr" data-k="ArrowRight"></div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="touch-zone btn-grp">
+                <div class="t-btn" data-k="ShiftLeft">DASH</div>
+                <div class="t-btn" data-k="KeyE">USE</div>
+                <div class="t-btn" style="border-color: var(--accent); background: rgba(255, 0, 110, 0.3);" data-k="Space">ATK</div>
+            </div>
+        </div>
+
+        <!-- Start Overlay -->
+        <div id="start-overlay">
+            <div class="title">
+                AETHELGARD<br>DAYBREAK
+            </div>
+            <div class="subtitle">
+                Illuminated Ruins • Combo Combat • Procedural Audio<br><br>
+                <strong>Controls:</strong><br>
+                WASD/Arrows: Move | SPACE: Attack | SHIFT: Dash
+            </div>
+            <button class="start-btn" onclick="initGame()">AWAKEN</button>
+        </div>
+    </div>
+
+    <!-- Game Scripts (ES6 Modules) -->
+    <script type="module" src="src/js/game.js"></script>
+</body>
+</html>
