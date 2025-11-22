@@ -44,8 +44,8 @@ export const CFG = {
 
     // DIABLO-LIKE LIGHTING SETTINGS
     DARKNESS_ENABLED: true,         // Enable fog of war
-    DARKNESS_OPACITY: 0.92,         // Near-total darkness (90%+ black)
-    VISION_RADIUS: 180,             // Player's vision circle (smaller = more claustrophobic)
+    DARKNESS_OPACITY: 0.75,         // Darkness overlay (reduced from 0.92 for better visibility)
+    VISION_RADIUS: 200,             // Player's vision circle (increased from 180 for better visibility)
     PLAYER_LIGHT_RADIUS: 150,       // Reduced light radius
     LOOT_LIGHT_RADIUS: 80,
     ENEMY_LIGHT_RADIUS: 40,
@@ -66,5 +66,13 @@ export const CFG = {
 
     // Loot settings
     LOOT_BEAM_HEIGHT: 120,          // Height of colored loot beam
-    LOOT_RARITIES: ['common', 'uncommon', 'rare', 'epic', 'legendary']
+    LOOT_RARITIES: ['common', 'uncommon', 'rare', 'epic', 'legendary'],
+
+    // 3D RENDERING SETTINGS (Three.js)
+    USE_3D_RENDERER: true,          // Enable WebGL 3D rendering (Modern Diablo style)
+    SHADOW_QUALITY: 'medium',       // Shadow map quality: 'low', 'medium', 'high'
+    ISOMETRIC_ANGLE: 45,            // Camera angle in degrees
+    CAMERA_ZOOM: 20,                // Orthographic camera zoom level (lower = closer)
+    ENABLE_BLOOM: false,            // Post-processing bloom effect (performance impact)
+    ENABLE_ANTIALIASING: true       // Smooth edges (slight performance impact)
 };

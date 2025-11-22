@@ -15,6 +15,7 @@ import { Golem } from './entities/golem.js';
 import { Corpse } from './entities/corpse.js';
 import { BloodStain } from './entities/bloodstain.js';
 import { QuestSystem } from './quest.js';
+import { Renderer3D } from './renderer3d.js';
 
 export class Game {
     constructor() {
@@ -24,6 +25,10 @@ export class Game {
         this.lightCtx = null;
         this.minimapCanvas = null;
         this.minimapCtx = null;
+
+        // 3D Renderer
+        this.renderer3d = null;
+        this.use3D = CFG.USE_3D_RENDERER; // Use config setting
 
         this.map = null;
         this.player = null;
@@ -40,7 +45,7 @@ export class Game {
         this.lightFlicker = 0;
         this.screenFlash = 0;
         this.chromaticAberration = 0;
-        this.fadeIn = 1; // Start with black screen
+        this.fadeIn = 0; // Start visible (was 1, causing dark screen)
     }
 
     /**
@@ -68,18 +73,26 @@ export class Game {
 
         // Setup canvas
         this.canvas = document.getElementById('game');
-        this.ctx = this.canvas.getContext('2d');
-        this.canvas.width = CFG.W;
-        this.canvas.height = CFG.H;
-        this.ctx.imageSmoothingEnabled = false;
 
-        // Setup lighting canvas
-        this.lightCanvas = document.createElement('canvas');
-        this.lightCanvas.width = CFG.W;
-        this.lightCanvas.height = CFG.H;
-        this.lightCtx = this.lightCanvas.getContext('2d');
+        if (this.use3D) {
+            // Initialize 3D renderer
+            this.renderer3d = new Renderer3D(this.canvas);
+            this.renderer3d.init();
+        } else {
+            // Fallback to 2D canvas
+            this.ctx = this.canvas.getContext('2d');
+            this.canvas.width = CFG.W;
+            this.canvas.height = CFG.H;
+            this.ctx.imageSmoothingEnabled = false;
 
-        // Setup minimap
+            // Setup lighting canvas
+            this.lightCanvas = document.createElement('canvas');
+            this.lightCanvas.width = CFG.W;
+            this.lightCanvas.height = CFG.H;
+            this.lightCtx = this.lightCanvas.getContext('2d');
+        }
+
+        // Setup minimap (2D for now, even in 3D mode)
         this.minimapCanvas = document.getElementById('minimap');
         if (this.minimapCanvas) {
             this.minimapCtx = this.minimapCanvas.getContext('2d');
@@ -90,10 +103,19 @@ export class Game {
         this.map = new MapSystem(CFG.MAP_WIDTH, CFG.MAP_HEIGHT);
         const startPos = this.map.generate();
 
+        // Generate 3D map if using 3D renderer
+        if (this.use3D && this.renderer3d) {
+            this.renderer3d.generateMap(this.map);
+        }
+
         // Create player with selected class
         const selectedClass = window.selectedClass || 'WARRIOR';
         this.player = new Player(startPos.x, startPos.y, selectedClass);
         this.entities = [this.player];
+
+        // Initialize camera to player position to avoid dark screen on startup
+        this.camera.x = this.player.x - CFG.W / 2 + 16;
+        this.camera.y = this.player.y - CFG.H / 2 + 16;
 
         // Spawn enemies
         this.spawnEnemies(startPos);
@@ -268,6 +290,16 @@ export class Game {
      * Render the game
      */
     render() {
+        if (this.use3D && this.renderer3d) {
+            // Use 3D renderer
+            this.renderer3d.render(this);
+
+            // Still draw minimap in 2D
+            this.drawMinimap();
+            return;
+        }
+
+        // Fallback to 2D rendering
         // Clear background
         this.ctx.fillStyle = '#2b2d42';
         this.ctx.fillRect(0, 0, CFG.W, CFG.H);
