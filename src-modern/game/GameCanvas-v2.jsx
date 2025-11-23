@@ -92,8 +92,15 @@ export const GameCanvas = () => {
       playerSprite.anchor.set(0.5);
       playerSprite.x = spawn.x;
       playerSprite.y = spawn.y;
+      // Make player larger and more visible
+      playerSprite.scale.set(2, 2); // 2x larger than tiles
       playerSpriteRef.current = playerSprite;
       worldContainer.addChild(playerSprite);
+      console.log('[GameCanvas] Player sprite created:', {
+        position: { x: playerSprite.x, y: playerSprite.y },
+        size: { width: playerSprite.width, height: playerSprite.height },
+        scale: playerSprite.scale
+      });
 
       // Create lighting overlay
       const lightingGraphics = new PIXI.Graphics();
