@@ -33,15 +33,15 @@ export const useGameStore = create((set, get) => ({
   // ============ LIGHTING & VISIBILITY CONFIG ============
   // This is the KEY to solving visibility issues!
   lighting: {
-    enabled: true,
+    enabled: false,  // FIXED: Disabled by default for better visibility
     // CRITICAL: Lower opacity = more visibility
-    darknessOpacity: 0.3,  // Was 0.75 in old version - NOW MUCH LIGHTER
+    darknessOpacity: 0.2,  // FIXED: Reduced from 0.3 for better visibility
     // CRITICAL: Larger radius = see further
-    visionRadius: 400,     // Was 200 in old version - NOW SEE FURTHER
-    lightFalloff: 0.4,     // Was 0.6 - NOW SOFTER EDGES
-    playerLightRadius: 200, // Increased from 150
-    lootLightRadius: 100,
-    enemyLightRadius: 60,
+    visionRadius: 500,     // FIXED: Increased from 400 for better visibility
+    lightFalloff: 0.3,     // FIXED: Reduced from 0.4 for softer edges
+    playerLightRadius: 250, // FIXED: Increased from 200
+    lootLightRadius: 120,   // FIXED: Increased from 100
+    enemyLightRadius: 80,   // FIXED: Increased from 60
   },
 
   // ============ ENEMIES ============

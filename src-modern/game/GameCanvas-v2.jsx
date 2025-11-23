@@ -216,6 +216,7 @@ export const GameCanvas = () => {
 
   /**
    * Render lighting overlay
+   * SIMPLIFIED VERSION - Creates a basic fog of war effect
    */
   const renderLighting = () => {
     const g = lightingGraphicsRef.current;
@@ -227,23 +228,33 @@ export const GameCanvas = () => {
 
     if (!lighting.enabled) return;
 
-    // Fill screen with darkness
-    g.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    g.fill({ color: 0x000000, alpha: lighting.darknessOpacity });
-
-    // Draw vision circle around player (screen space)
+    // Calculate player screen position
     const playerScreenX = data.playerX - data.cameraX;
     const playerScreenY = data.playerY - data.cameraY;
 
-    // Create light gradient effect
-    g.circle(playerScreenX, playerScreenY, lighting.visionRadius);
-    g.fill({
-      color: 0x000000,
-      alpha: 0,
-    });
+    // FIXED APPROACH: Use multiple circles with decreasing alpha
+    // to create a smooth fog of war gradient
 
-    // Use blend mode to create fog effect
-    g.blendMode = 'multiply';
+    // Draw the outer darkness layer
+    g.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    g.fill({ color: 0x000000, alpha: lighting.darknessOpacity });
+
+    // Use ERASE blend mode to cut out the visible area
+    g.blendMode = 'erase';
+
+    // Draw gradient circles from center to edge
+    const steps = 10;
+    for (let i = 0; i < steps; i++) {
+      const ratio = i / steps;
+      const radius = lighting.visionRadius * ratio;
+      const alpha = 1 - ratio; // Fade from opaque to transparent
+
+      g.circle(playerScreenX, playerScreenY, radius);
+      g.fill({ color: 0xffffff, alpha: alpha * 0.8 });
+    }
+
+    // Reset blend mode
+    g.blendMode = 'normal';
   };
 
   return (
