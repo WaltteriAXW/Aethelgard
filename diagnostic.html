@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aethelgard - Diagnostic Tool</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0f;
+            color: #00ff00;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { color: #ffaa55; }
+        .section {
+            background: #1a1a2e;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #00ff00;
+        }
+        .pass { color: #00ff00; }
+        .fail { color: #ff0066; }
+        .warn { color: #ffaa55; }
+        button {
+            background: #ff0066;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+            font-family: inherit;
+        }
+        button:hover { background: #cc0052; }
+        code {
+            background: #0a0a0f;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        #output {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Aethelgard Diagnostic Tool</h1>
+
+    <div class="section">
+        <h2>System Checks</h2>
+        <div id="checks"></div>
+    </div>
+
+    <div class="section">
+        <h2>Service Worker Status</h2>
+        <div id="sw-status"></div>
+    </div>
+
+    <div class="section">
+        <h2>Cache Clear Tools</h2>
+        <button onclick="clearServiceWorker()">🗑️ Unregister Service Worker</button>
+        <button onclick="clearAllCaches()">🗑️ Clear All Caches</button>
+        <button onclick="hardReload()">🔄 Hard Reload</button>
+        <button onclick="fullReset()">💣 NUCLEAR RESET</button>
+        <div id="cache-output" style="margin-top: 10px;"></div>
+    </div>
+
+    <div class="section">
+        <h2>Manual Instructions</h2>
+        <p><strong>If you're still seeing the old version:</strong></p>
+        <ol>
+            <li>Press <code>Ctrl+Shift+Delete</code> (or <code>Cmd+Shift+Delete</code> on Mac)</li>
+            <li>Select "Cached images and files"</li>
+            <li>Click "Clear data"</li>
+            <li>Close ALL browser tabs of this site</li>
+            <li>Reopen the site in a new tab</li>
+        </ol>
+        <p><strong>Or try Incognito/Private mode:</strong></p>
+        <ol>
+            <li>Press <code>Ctrl+Shift+N</code> (Chrome) or <code>Ctrl+Shift+P</code> (Firefox)</li>
+            <li>Navigate to your GitHub Pages URL</li>
+            <li>This will bypass all caches</li>
+        </ol>
+    </div>
+
+    <div class="section">
+        <h2>Expected Console Output</h2>
+        <p>When working correctly, you should see:</p>
+        <pre style="color: #00ff00;">
+[Game] Attempting to initialize 3D renderer...
+[Renderer3D] Starting initialization...
+[Renderer3D] Lighting setup complete:
+[Renderer3D] ✅ Initialized successfully
+[Renderer3D] Generated map: XXXX floors, YYYY walls
+        </pre>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r158/three.min.js"></script>
+    <script type="module">
+        const checksDiv = document.getElementById('checks');
+        const swStatusDiv = document.getElementById('sw-status');
+        const cacheOutput = document.getElementById('cache-output');
+
+        // Run diagnostic checks
+        function runChecks() {
+            let html = '';
+
+            // Check 1: Three.js loaded
+            if (typeof THREE !== 'undefined') {
+                html += '<div class="pass">✅ Three.js r' + THREE.REVISION + ' loaded successfully</div>';
+            } else {
+                html += '<div class="fail">❌ Three.js NOT loaded! Check internet connection or use offline mode.</div>';
+            }
+
+            // Check 2: WebGL support
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (gl) {
+                const vendor = gl.getParameter(gl.VENDOR);
+                const renderer = gl.getParameter(gl.RENDERER);
+                html += '<div class="pass">✅ WebGL supported</div>';
+                html += '<div style="margin-left: 20px; color: #aaa;">GPU: ' + renderer + '</div>';
+            } else {
+                html += '<div class="fail">❌ WebGL NOT supported! 3D mode will not work.</div>';
+            }
+
+            // Check 3: Service Worker
+            if ('serviceWorker' in navigator) {
+                html += '<div class="pass">✅ Service Worker API available</div>';
+            } else {
+                html += '<div class="warn">⚠️ Service Worker not available (this is OK)</div>';
+            }
+
+            // Check 4: Try to import renderer3d.js
+            import('./src/js/renderer3d.js')
+                .then(module => {
+                    checksDiv.innerHTML += '<div class="pass">✅ renderer3d.js loaded successfully!</div>';
+                })
+                .catch(err => {
+                    checksDiv.innerHTML += '<div class="fail">❌ renderer3d.js FAILED to load: ' + err.message + '</div>';
+                    checksDiv.innerHTML += '<div class="warn">This means the Service Worker is serving OLD cached files!</div>';
+                });
+
+            checksDiv.innerHTML = html;
+        }
+
+        // Check Service Worker status
+        async function checkServiceWorker() {
+            if (!('serviceWorker' in navigator)) {
+                swStatusDiv.innerHTML = '<div class="warn">Service Worker not supported in this browser</div>';
+                return;
+            }
+
+            const registration = await navigator.serviceWorker.getRegistration();
+
+            if (registration) {
+                const activeWorker = registration.active;
+                if (activeWorker) {
+                    swStatusDiv.innerHTML = `
+                        <div class="pass">✅ Service Worker is active</div>
+                        <div style="margin-left: 20px; color: #aaa;">
+                            State: ${activeWorker.state}<br>
+                            Scope: ${registration.scope}
+                        </div>
+                    `;
+                } else {
+                    swStatusDiv.innerHTML = '<div class="warn">⚠️ Service Worker registered but not active</div>';
+                }
+
+                // Check cache names
+                const cacheNames = await caches.keys();
+                swStatusDiv.innerHTML += '<div style="margin-top: 10px;"><strong>Cached versions:</strong></div>';
+                cacheNames.forEach(name => {
+                    const color = name.includes('v3') ? 'pass' : 'fail';
+                    swStatusDiv.innerHTML += `<div class="${color}" style="margin-left: 20px;">• ${name}</div>`;
+                });
+
+                if (cacheNames.some(name => name.includes('v1') || name.includes('v2'))) {
+                    swStatusDiv.innerHTML += '<div class="fail">❌ OLD cache versions detected! Click "Clear All Caches" below.</div>';
+                }
+            } else {
+                swStatusDiv.innerHTML = '<div class="warn">No Service Worker registered</div>';
+            }
+        }
+
+        // Clear functions
+        window.clearServiceWorker = async function() {
+            try {
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    await registration.unregister();
+                    cacheOutput.innerHTML = '<div class="pass">✅ Service Worker unregistered! Reload the page.</div>';
+                } else {
+                    cacheOutput.innerHTML = '<div class="warn">No Service Worker to unregister</div>';
+                }
+            } catch (err) {
+                cacheOutput.innerHTML = '<div class="fail">❌ Error: ' + err.message + '</div>';
+            }
+        };
+
+        window.clearAllCaches = async function() {
+            try {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                cacheOutput.innerHTML = '<div class="pass">✅ All caches cleared! Reload the page.</div>';
+            } catch (err) {
+                cacheOutput.innerHTML = '<div class="fail">❌ Error: ' + err.message + '</div>';
+            }
+        };
+
+        window.hardReload = function() {
+            location.reload(true);
+        };
+
+        window.fullReset = async function() {
+            cacheOutput.innerHTML = '<div class="warn">🔥 Performing nuclear reset...</div>';
+
+            // Unregister service worker
+            if ('serviceWorker' in navigator) {
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) await registration.unregister();
+            }
+
+            // Clear all caches
+            const cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map(name => caches.delete(name)));
+
+            // Clear localStorage
+            localStorage.clear();
+
+            // Clear sessionStorage
+            sessionStorage.clear();
+
+            cacheOutput.innerHTML = '<div class="pass">✅ Everything cleared! Reloading in 2 seconds...</div>';
+
+            setTimeout(() => {
+                location.reload(true);
+            }, 2000);
+        };
+
+        // Run checks on load
+        runChecks();
+        checkServiceWorker();
+    </script>
+</body>
+</html>

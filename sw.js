@@ -3,7 +3,7 @@
  * Enables offline play and caching
  */
 
-const CACHE_NAME = 'aethelgard-v1';
+const CACHE_NAME = 'aethelgard-v3';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -12,6 +12,8 @@ const ASSETS_TO_CACHE = [
     '/src/js/config.js',
     '/src/js/audio.js',
     '/src/js/graphics.js',
+    '/src/js/renderer3d.js',
+    '/src/js/classes.js',
     '/src/js/input.js',
     '/src/js/map.js',
     '/src/js/quest.js',
