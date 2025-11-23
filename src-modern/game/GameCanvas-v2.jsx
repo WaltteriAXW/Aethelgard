@@ -92,8 +92,15 @@ export const GameCanvas = () => {
       playerSprite.anchor.set(0.5);
       playerSprite.x = spawn.x;
       playerSprite.y = spawn.y;
+      // Make player larger and more visible
+      playerSprite.scale.set(2, 2); // 2x larger than tiles
       playerSpriteRef.current = playerSprite;
       worldContainer.addChild(playerSprite);
+      console.log('[GameCanvas] Player sprite created:', {
+        position: { x: playerSprite.x, y: playerSprite.y },
+        size: { width: playerSprite.width, height: playerSprite.height },
+        scale: playerSprite.scale
+      });
 
       // Create lighting overlay
       const lightingGraphics = new PIXI.Graphics();
@@ -136,12 +143,6 @@ export const GameCanvas = () => {
       }
 
       console.log('[GameCanvas] Initial render complete:', { floorCount, wallCount });
-
-      // DEBUG: Add a bright test rectangle at screen center to verify rendering
-      const testRect = new PIXI.Graphics();
-      testRect.rect(CANVAS_WIDTH / 2 - 50, CANVAS_HEIGHT / 2 - 50, 100, 100).fill(0xff0000); // Bright red
-      uiContainer.addChild(testRect);
-      console.log('[GameCanvas] DEBUG: Added red test rectangle at screen center');
 
       // Update store
       updatePlayerPosition(spawn.x, spawn.y);
@@ -317,32 +318,13 @@ export const GameCanvas = () => {
   };
 
   return (
-    <div style={{ position: 'relative' }}>
-      <div
-        ref={canvasRef}
-        style={{
-          width: `${CANVAS_WIDTH}px`,
-          height: `${CANVAS_HEIGHT}px`,
-          margin: '0 auto',
-        }}
-      />
-      {/* Debug status overlay */}
-      <div style={{
-        position: 'absolute',
-        top: '10px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        background: 'rgba(255, 0, 0, 0.8)',
-        color: '#fff',
-        padding: '10px 20px',
-        borderRadius: '5px',
-        fontFamily: 'monospace',
-        fontSize: '14px',
-        pointerEvents: 'none',
-        zIndex: 9999,
-      }}>
-        {initStatus}
-      </div>
-    </div>
+    <div
+      ref={canvasRef}
+      style={{
+        width: `${CANVAS_WIDTH}px`,
+        height: `${CANVAS_HEIGHT}px`,
+        margin: '0 auto',
+      }}
+    />
   );
 };
