@@ -2,239 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Aethelgard: Daybreak Edition - A retro browser RPG with procedural generation and combo combat">
-    <meta name="keywords" content="rpg, game, browser game, retro, pixel art, javascript">
-    <meta name="author" content="Aethelgard Team">
-    <meta name="theme-color" content="#8ecae6">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aethelgard - Tier 1 Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    <title>Aethelgard: Daybreak Edition</title>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            overflow: hidden;
+        }
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
-
-    <!-- Stylesheet -->
-    <link rel="stylesheet" href="src/css/style.css">
-
-    <!-- Three.js WebGL Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r158/three.min.js"></script>
+        #root {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
 </head>
 <body>
-    <div id="game-frame">
-        <!-- Game Canvas (Three.js will manage this) -->
-        <canvas id="game"></canvas>
-
-        <!-- UI Layer -->
-        <div id="ui-layer">
-            <!-- DIABLO-STYLE HEALTH & MANA ORBS -->
-            <div class="orb-container left-orb">
-                <div class="orb-sphere health-orb">
-                    <div class="orb-liquid" id="health-orb-fill"></div>
-                    <div class="orb-shine"></div>
-                    <div class="orb-glass"></div>
-                </div>
-                <div class="orb-label">HEALTH</div>
-                <div class="orb-value" id="health-value">100/100</div>
-            </div>
-
-            <div class="orb-container right-orb">
-                <div class="orb-sphere mana-orb">
-                    <div class="orb-liquid" id="mana-orb-fill"></div>
-                    <div class="orb-shine"></div>
-                    <div class="orb-glass"></div>
-                </div>
-                <div class="orb-label">MANA</div>
-                <div class="orb-value" id="mana-value">100/100</div>
-            </div>
-
-            <div class="hud-header">
-                <!-- Character Stats -->
-                <div class="char-card">
-                    <div class="stat-row">
-                        <span id="class-name">ARCHITECT</span>
-                        <span id="lvl-txt">LVL 1</span>
-                    </div>
-                    <div class="bar-wrap" style="height: 6px; margin: 0;">
-                        <div class="bar-fill xp" id="xp-bar" style="width: 0%;"></div>
-                    </div>
-                </div>
-
-                <!-- Quest Display -->
-                <div class="quest-box" id="quest-disp">
-                    Initializing System...
-                </div>
-            </div>
-
-            <!-- Minimap -->
-            <div class="minimap-container">
-                <canvas id="minimap" width="150" height="150"></canvas>
-            </div>
-
-            <!-- Combo Indicator -->
-            <div id="combo-indicator" class="combo-indicator" style="display: none;"></div>
-
-            <!-- Skill Bar -->
-            <div class="skill-bar">
-                <div class="skill-slot" data-key="1">
-                    <div class="skill-icon" id="skill-1-icon">1</div>
-                    <div class="skill-name" id="skill-1-name">-</div>
-                    <div class="skill-cooldown" id="skill-1-cooldown"></div>
-                    <div class="skill-hotkey">1</div>
-                </div>
-                <div class="skill-slot" data-key="2">
-                    <div class="skill-icon" id="skill-2-icon">2</div>
-                    <div class="skill-name" id="skill-2-name">-</div>
-                    <div class="skill-cooldown" id="skill-2-cooldown"></div>
-                    <div class="skill-hotkey">2</div>
-                </div>
-                <div class="skill-slot" data-key="3">
-                    <div class="skill-icon" id="skill-3-icon">3</div>
-                    <div class="skill-name" id="skill-3-name">-</div>
-                    <div class="skill-cooldown" id="skill-3-cooldown"></div>
-                    <div class="skill-hotkey">3</div>
-                </div>
-                <div class="skill-slot" data-key="4">
-                    <div class="skill-icon" id="skill-4-icon">4</div>
-                    <div class="skill-name" id="skill-4-name">-</div>
-                    <div class="skill-cooldown" id="skill-4-cooldown"></div>
-                    <div class="skill-hotkey">4</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mobile Touch Controls -->
-        <div class="touch-overlay" id="mob-ctrl">
-            <!-- D-Pad -->
-            <div class="touch-zone d-pad">
-                <div class="d-btn du" data-k="ArrowUp"></div>
-                <div class="d-btn dd" data-k="ArrowDown"></div>
-                <div class="d-btn dl" data-k="ArrowLeft"></div>
-                <div class="d-btn dr" data-k="ArrowRight"></div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="touch-zone btn-grp">
-                <div class="t-btn" data-k="ShiftLeft">DASH</div>
-                <div class="t-btn" data-k="KeyE">USE</div>
-                <div class="t-btn" style="border-color: var(--accent); background: rgba(255, 0, 110, 0.3);" data-k="Space">ATK</div>
-            </div>
-        </div>
-
-        <!-- Start Overlay -->
-        <div id="start-overlay">
-            <div class="title">
-                AETHELGARD<br>DAYBREAK
-            </div>
-            <div class="subtitle">
-                Illuminated Ruins • Combo Combat • Procedural Audio<br><br>
-                <strong>Controls:</strong><br>
-                WASD/Arrows: Move | SPACE: Attack | SHIFT: Dash | 1-4: Skills
-            </div>
-            <button class="start-btn" onclick="showClassSelection()">AWAKEN</button>
-        </div>
-
-        <!-- Class Selection Overlay -->
-        <div id="class-selection" style="display: none;">
-            <div class="class-select-title">CHOOSE YOUR PATH</div>
-
-            <div class="class-grid">
-                <!-- Warrior -->
-                <div class="class-card" data-class="WARRIOR" onclick="selectClass('WARRIOR')">
-                    <div class="class-icon">⚔️</div>
-                    <div class="class-name">WARRIOR</div>
-                    <div class="class-desc">Master of melee combat with high health and devastating strikes</div>
-                    <div class="class-stats">
-                        <div class="stat-item">❤️ HP: 150</div>
-                        <div class="stat-item">💧 MANA: 50</div>
-                        <div class="stat-item">⚡ SPD: Medium</div>
-                        <div class="stat-item">⚔️ DMG: High</div>
-                    </div>
-                </div>
-
-                <!-- Rogue -->
-                <div class="class-card" data-class="ROGUE" onclick="selectClass('ROGUE')">
-                    <div class="class-icon">🗡️</div>
-                    <div class="class-name">ROGUE</div>
-                    <div class="class-desc">Swift assassin with deadly precision and shadow powers</div>
-                    <div class="class-stats">
-                        <div class="stat-item">❤️ HP: 80</div>
-                        <div class="stat-item">💧 MANA: 100</div>
-                        <div class="stat-item">⚡ SPD: Very High</div>
-                        <div class="stat-item">⚔️ DMG: Medium</div>
-                    </div>
-                </div>
-
-                <!-- Mage -->
-                <div class="class-card" data-class="MAGE" onclick="selectClass('MAGE')">
-                    <div class="class-icon">🔮</div>
-                    <div class="class-name">MAGE</div>
-                    <div class="class-desc">Wielder of elemental magic with devastating spells</div>
-                    <div class="class-stats">
-                        <div class="stat-item">❤️ HP: 60</div>
-                        <div class="stat-item">💧 MANA: 150</div>
-                        <div class="stat-item">⚡ SPD: Low</div>
-                        <div class="stat-item">⚔️ DMG: Very High</div>
-                    </div>
-                </div>
-
-                <!-- Paladin -->
-                <div class="class-card" data-class="PALADIN" onclick="selectClass('PALADIN')">
-                    <div class="class-icon">✨</div>
-                    <div class="class-name">PALADIN</div>
-                    <div class="class-desc">Holy warrior who balances offense and defense</div>
-                    <div class="class-stats">
-                        <div class="stat-item">❤️ HP: 120</div>
-                        <div class="stat-item">💧 MANA: 80</div>
-                        <div class="stat-item">⚡ SPD: Medium</div>
-                        <div class="stat-item">⚔️ DMG: Medium-High</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="class-select-hint">Click a class to begin your journey</div>
-        </div>
-    </div>
-
-    <!-- Game Scripts (ES6 Modules) -->
-    <script type="module" src="src/js/game.js"></script>
-
-    <!-- Class Selection Script -->
-    <script type="module">
-        import { getClass } from './src/js/classes.js';
-
-        window.selectedClass = null;
-
-        window.showClassSelection = function() {
-            document.getElementById('start-overlay').style.display = 'none';
-            document.getElementById('class-selection').style.display = 'flex';
-        };
-
-        window.selectClass = function(className) {
-            window.selectedClass = className;
-            document.getElementById('class-selection').style.display = 'none';
-            window.initGame();
-        };
-    </script>
-
-    <!-- Service Worker Registration -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then((registration) => {
-                        console.log('[SW] Registered successfully:', registration.scope);
-                    })
-                    .catch((error) => {
-                        console.log('[SW] Registration failed:', error);
-                    });
-            });
-        }
-    </script>
+    <div id="root"></div>
+    <script type="module" src="/src-modern/main.jsx"></script>
 </body>
 </html>
