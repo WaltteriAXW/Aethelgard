@@ -204,11 +204,9 @@ export const GameCanvas = () => {
         const py = y * TILE_SIZE;
 
         if (tile === map.TILE_FLOOR) {
-          g.rect(px, py, TILE_SIZE, TILE_SIZE);
-          g.fill({ color: 0x3d5a40 });
+          g.rect(px, py, TILE_SIZE, TILE_SIZE).fill(0x3d5a40);
         } else if (tile === map.TILE_WALL) {
-          g.rect(px, py, TILE_SIZE, TILE_SIZE);
-          g.fill({ color: 0x2b2d42 });
+          g.rect(px, py, TILE_SIZE, TILE_SIZE).fill(0x2b2d42);
         }
       }
     }
@@ -236,8 +234,7 @@ export const GameCanvas = () => {
     // to create a smooth fog of war gradient
 
     // Draw the outer darkness layer
-    g.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    g.fill({ color: 0x000000, alpha: lighting.darknessOpacity });
+    g.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT).fill({ color: 0x000000, alpha: lighting.darknessOpacity });
 
     // Use ERASE blend mode to cut out the visible area
     g.blendMode = 'erase';
@@ -249,8 +246,7 @@ export const GameCanvas = () => {
       const radius = lighting.visionRadius * ratio;
       const alpha = 1 - ratio; // Fade from opaque to transparent
 
-      g.circle(playerScreenX, playerScreenY, radius);
-      g.fill({ color: 0xffffff, alpha: alpha * 0.8 });
+      g.circle(playerScreenX, playerScreenY, radius).fill({ color: 0xffffff, alpha: alpha * 0.8 });
     }
 
     // Reset blend mode
