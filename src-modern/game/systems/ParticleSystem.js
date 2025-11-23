@@ -1,6 +1,6 @@
 /**
  * ParticleSystem - Visual effects and feedback
- * Tier 1 Edition - Simple but impactful particles
+ * ENHANCED - More particle types and effects
  */
 
 export class Particle {
@@ -15,12 +15,29 @@ export class Particle {
     this.size = config.size || 4;
     this.gravity = config.gravity || 0;
     this.alive = true;
+    this.shrink = config.shrink || false;
+    this.glow = config.glow || false;
+    this.trail = config.trail || false;
+    this.trailHistory = [];
   }
 
   update(dt) {
+    // Store trail position
+    if (this.trail) {
+      this.trailHistory.push({ x: this.x, y: this.y });
+      if (this.trailHistory.length > 5) {
+        this.trailHistory.shift();
+      }
+    }
+
     this.x += this.vx * dt;
     this.y += this.vy * dt;
     this.vy += this.gravity * dt;
+
+    // Air resistance
+    this.vx *= 0.98;
+    this.vy *= 0.98;
+
     this.life -= dt;
 
     if (this.life <= 0) {
@@ -30,6 +47,13 @@ export class Particle {
 
   getAlpha() {
     return Math.max(0, this.life / this.maxLife);
+  }
+
+  getSize() {
+    if (this.shrink) {
+      return this.size * (this.life / this.maxLife);
+    }
+    return this.size;
   }
 }
 
@@ -51,85 +75,107 @@ export class ParticleSystem {
   }
 
   /**
-   * Create slash effect for attacks
+   * Create slash effect for attacks - ENHANCED
    */
   createSlashEffect(x, y, angle) {
-    const particleCount = 15;
+    const particleCount = 25; // More particles
 
     for (let i = 0; i < particleCount; i++) {
-      const spread = 0.8; // Spread angle
+      const spread = 0.8;
       const particleAngle = angle + (Math.random() - 0.5) * spread;
-      const speed = 150 + Math.random() * 100;
+      const speed = 200 + Math.random() * 150;
+
+      // Mix of yellow and white for slash
+      const colors = [0xffff00, 0xffffff, 0xffa500];
+      const color = colors[Math.floor(Math.random() * colors.length)];
 
       this.particles.push(new Particle(x, y, {
         vx: Math.cos(particleAngle) * speed,
         vy: Math.sin(particleAngle) * speed,
-        life: 0.3 + Math.random() * 0.2,
-        color: 0xffff00, // Yellow slash
-        size: 3 + Math.random() * 3,
+        life: 0.4 + Math.random() * 0.2,
+        color: color,
+        size: 4 + Math.random() * 4,
+        glow: true,
+        trail: Math.random() < 0.3, // Some particles have trails
+        shrink: true,
       }));
     }
   }
 
   /**
-   * Create blood/damage particles
+   * Create blood/damage particles - ENHANCED
    */
   createDamageEffect(x, y) {
-    const particleCount = 10;
+    const particleCount = 15;
 
     for (let i = 0; i < particleCount; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 100 + Math.random() * 150;
+      const speed = 120 + Math.random() * 180;
+
+      const colors = [0xff0000, 0xff3333, 0xcc0000];
+      const color = colors[Math.floor(Math.random() * colors.length)];
 
       this.particles.push(new Particle(x, y, {
         vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        life: 0.4 + Math.random() * 0.3,
-        color: 0xff3333, // Red blood
-        size: 2 + Math.random() * 2,
-        gravity: 300, // Falls down
+        vy: Math.sin(angle) * speed - 50, // Initial upward burst
+        life: 0.5 + Math.random() * 0.3,
+        color: color,
+        size: 3 + Math.random() * 3,
+        gravity: 400, // Falls down fast
+        shrink: true,
       }));
     }
   }
 
   /**
-   * Create loot sparkle effect
+   * Create loot sparkle effect - ENHANCED
    */
   createLootEffect(x, y) {
-    const particleCount = 20;
+    const particleCount = 30;
 
     for (let i = 0; i < particleCount; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 50 + Math.random() * 100;
+      const speed = 60 + Math.random() * 120;
+
+      const colors = [0xffd700, 0xffed4e, 0xffffff];
+      const color = colors[Math.floor(Math.random() * colors.length)];
 
       this.particles.push(new Particle(x, y, {
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
-        life: 0.5 + Math.random() * 0.5,
-        color: 0xffaa00, // Gold sparkle
-        size: 2 + Math.random() * 3,
-        gravity: -50, // Floats up
+        life: 0.7 + Math.random() * 0.5,
+        color: color,
+        size: 2 + Math.random() * 4,
+        gravity: -80, // Floats up
+        glow: true,
+        shrink: true,
       }));
     }
   }
 
   /**
-   * Create death explosion
+   * Create death explosion - ENHANCED
    */
   createDeathEffect(x, y) {
-    const particleCount = 25;
+    const particleCount = 40;
 
     for (let i = 0; i < particleCount; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 150 + Math.random() * 200;
+      const speed = 180 + Math.random() * 250;
+
+      const colors = [0xff0000, 0xff4400, 0xff8800, 0xffaa00];
+      const color = colors[Math.floor(Math.random() * colors.length)];
 
       this.particles.push(new Particle(x, y, {
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
-        life: 0.6 + Math.random() * 0.4,
-        color: i % 2 === 0 ? 0xff0000 : 0xff6600, // Red/orange mix
-        size: 3 + Math.random() * 4,
-        gravity: 200,
+        life: 0.7 + Math.random() * 0.5,
+        color: color,
+        size: 4 + Math.random() * 5,
+        gravity: 300,
+        glow: true,
+        trail: Math.random() < 0.4,
+        shrink: true,
       }));
     }
   }
