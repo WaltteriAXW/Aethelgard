@@ -52,7 +52,15 @@ export const GameCanvas = () => {
       background: 0x1a1a1a, // Slightly lighter background for better visibility
       antialias: false,
     }).then(() => {
+      console.log('[GameCanvas] App initialized, appending canvas...');
+
+      if (!canvasRef.current) {
+        console.error('[GameCanvas] ❌ canvasRef.current is null after init!');
+        return;
+      }
+
       canvasRef.current.appendChild(app.canvas);
+      console.log('[GameCanvas] Canvas appended to DOM');
 
       // Generate textures
       const textures = generateAllTextures();
@@ -142,6 +150,9 @@ export const GameCanvas = () => {
 
       // Start game loop
       app.ticker.add((ticker) => gameLoop(ticker.deltaTime));
+    }).catch(error => {
+      console.error('[GameCanvas] ❌ Initialization failed:', error);
+      console.error('[GameCanvas] Error stack:', error.stack);
     });
 
     return () => {
