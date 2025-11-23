@@ -6,123 +6,132 @@ import * as PIXI from 'pixi.js';
  * while leveraging GPU acceleration
  */
 
-// Color palettes from original game
+// Enhanced color palettes - Tier 1 Edition
 const palettes = {
   hero: {
-    a: '#1d3557',  // Armor blue
-    s: '#ffcb9a',  // Skin
-    c: '#457b9d',  // Cape/cloth
-    h: '#f1faee',  // Highlights
-    x: '#ffb703'   // Emblem/accent
+    a: '#2c5f8d',  // Rich armor blue
+    s: '#ffd7a8',  // Warm skin tone
+    c: '#5da5d5',  // Vibrant cape
+    h: '#ffffff',  // Bright highlights
+    x: '#ffa500',  // Golden emblem
+    o: '#1a3a52'   // Dark outline
   },
   skel: {
-    a: '#1d3557',  // Shadow
-    b: '#e1e5f2',  // Bone white
-    r: '#e63946'   // Red eyes
+    a: '#1a1a2e',  // Deep shadow
+    b: '#f0f4f8',  // Bright bone white
+    r: '#ff2a2a',  // Glowing red eyes
+    d: '#8b8b9e',  // Dark bone
+    o: '#0f0f1a'   // Black outline
   },
   wraith: {
-    a: '#1d1d3a',  // Dark purple shadow
-    b: '#6a4c93',  // Purple body
-    e: '#b185db',  // Light purple
-    r: '#ff006e'   // Pink eyes
+    a: '#1e1e3f',  // Dark void
+    b: '#8257e5',  // Vivid purple
+    e: '#c084fc',  // Bright purple glow
+    r: '#ff0080',  // Hot pink eyes
+    d: '#4a3a6e',  // Dark purple
+    o: '#0d0d1f'   // Black outline
   },
   golem: {
-    a: '#2f3e46',  // Dark rock
-    b: '#52796f',  // Medium rock
-    c: '#84a98c',  // Light rock
-    e: '#f77f00'   // Orange core/eyes
+    a: '#3a4a52',  // Dark stone
+    b: '#5d7d72',  // Medium stone
+    c: '#9fbfb0',  // Light stone
+    e: '#ff8c00',  // Glowing orange core
+    h: '#ffa500',  // Bright orange
+    o: '#1f2729'   // Black outline
   },
   loot: {
-    g: '#ffb703',  // Gold
-    w: '#fff'      // White shine
+    g: '#ffd700',  // Pure gold
+    w: '#ffffff',  // White shine
+    y: '#ffed4e',  // Yellow glow
+    o: '#b8860b'   // Dark gold outline
   }
 };
 
-// Sprite definitions (16x16 ASCII art)
+// Enhanced sprite definitions (16x16 ASCII art) - Tier 1 Edition
 const definitions = {
   hero: [
-    '......aaaa......',
-    '.....ahhhha.....',
-    '....ahhsshha....',
-    '....ahssssaa....',
-    '...aacccccaa....',
-    '..aaccxxccca....',
-    '..acccxxccca....',
-    '..aacccccaaa....',
-    '...haccccah.....',
-    '...ha.aa.ah.....',
-    '..aaa..aaaa.....',
-    '..aa....aa......',
-    '..aa....aa......',
-    '.aa......aa.....',
+    '.....oooooo.....',
+    '....ohhhhhho....',
+    '...ohhssssho....',
+    '...ohsshssho....',
+    '..ooaaccccao....',
+    '..oacxxccxcao...',
+    '..oacccccccao...',
+    '..oaacccccaao...',
+    '...oaccccco.....',
+    '...oaa..aao.....',
+    '..oaao.oaaao....',
+    '..oaa...oaao....',
+    '..oaa...oaao....',
+    '.oaa.....oaao...',
     '................',
     '................'
   ],
   skel: [
-    '......aaaa......',
-    '.....abbbba.....',
-    '....abrrbba.....',
-    '....abbbbba.....',
-    '...aabbbbbaa....',
-    '..aabbbbbbba....',
-    '..abbbbbbbba....',
-    '..aabbbbbaa.....',
-    '....abbbba......',
-    '...aa.bb.aa.....',
-    '..aa..bb..aa....',
-    '..aa..aa..aa....',
-    '.aa....aa...aa..',
+    '.....oooooo.....',
+    '....oobbbbo.....',
+    '...oobrrrbo.....',
+    '...oobbbbboo....',
+    '..oodbbbbdoo....',
+    '..obbbbbbbbo....',
+    '..obbbbbbbbo....',
+    '..oobbbbbboo....',
+    '...oobbbboo.....',
+    '...oad.bdao.....',
+    '..oaod.bdoao....',
+    '..oao..bdoao....',
+    '.oao....aoao....',
     '................',
     '................',
     '................'
   ],
   wraith: [
-    '......aaaa......',
-    '.....abbbba.....',
-    '....abrrrbba....',
-    '....abeeeeba....',
-    '...aabbbbbaa....',
-    '..aabbbbbbba....',
-    '..abbeebbeea....',
-    '..aabbbbbba.....',
-    '...aabbbaa......',
-    '....abbba.......',
-    '...aa.bba.......',
-    '..aa..ba........',
-    '.aa...aa........',
-    '..aa.aa.........',
-    '...aaa..........',
+    '.....oooooo.....',
+    '....oobbbbo.....',
+    '...oobrrrrbo....',
+    '...obeeeeeebo...',
+    '..oodbbbbbdoo...',
+    '..obbbbbbbbbo...',
+    '..obeebbbeebo...',
+    '..oobbbbbbbo....',
+    '...oobbbboo.....',
+    '....oobbbo......',
+    '...ood.bbo......',
+    '..oao..bdo......',
+    '.oao...odo......',
+    '..oao.oo........',
+    '...ooo..........',
     '................'
   ],
   golem: [
-    '.....aaaaaa.....',
-    '....abbbbba.....',
-    '...abbcccbba....',
-    '..abbceeecba....',
-    '..abcceeeccba...',
-    '.abbbbccccbba...',
-    '.abbbccccccba...',
-    '..abbbbbbbba....',
-    '..aabbbbbbaa....',
-    '...aabbbbaa.....',
-    '...aa.bb.aa.....',
-    '..aa..bb..aa....',
-    '..aa..aa..aa....',
-    '.aa....aa...aa..',
+    '....oooooooo....',
+    '...oobbbbbbo....',
+    '..oobccccccbo...',
+    '..obcchhccccbo..',
+    '..obcchhhcccbo..',
+    '.oobbbccccbbbo..',
+    '.obbbbccccbbbo..',
+    '..obbbbbbbbbbo..',
+    '..oobbbbbbbboo..',
+    '...oobbbbbboo...',
+    '...oab.bb.bao...',
+    '..oaao.bb.oaao..',
+    '..oao..bb..oao..',
+    '.oao...oo...oao.',
     '................',
     '................'
   ],
   orb: [
     '................',
     '................',
-    '.....gggg.......',
-    '....ggwwgg......',
-    '...ggwwwwgg.....',
-    '..gggwwwwggg....',
-    '..ggggggggg.....',
-    '...gggggggg.....',
-    '....gggggg......',
-    '.....gggg.......',
+    '....oooooooo....',
+    '...oyggggyo.....',
+    '...ogywwggo.....',
+    '..oygwwwwgyo....',
+    '..ogggggggo.....',
+    '..oyggggyo......',
+    '...oyggyo.......',
+    '....oooo........',
     '................',
     '................',
     '................',

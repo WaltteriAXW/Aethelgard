@@ -2,6 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as PIXI from 'pixi.js';
 import { generateAllTextures } from './utils/textureGenerator';
 import { MapSystem } from './systems/MapSystem';
+import { CombatSystem } from './systems/CombatSystem';
+import { EnemyManager } from './systems/EnemySystem';
+import { ParticleSystem } from './systems/ParticleSystem';
+import { LootManager } from './systems/LootSystem';
 import { useGameStore } from './stores/useGameStore';
 import { useControls } from './hooks/useControls';
 
@@ -15,6 +19,9 @@ export const GameCanvas = () => {
   const playerSpriteRef = useRef(null);
   const mapGraphicsRef = useRef(null);
   const lightingGraphicsRef = useRef(null);
+  const enemyContainerRef = useRef(null);
+  const particleGraphicsRef = useRef(null);
+  const lootContainerRef = useRef(null);
   const gameDataRef = useRef({
     map: null,
     textures: null,
@@ -22,12 +29,21 @@ export const GameCanvas = () => {
     playerY: 300,
     cameraX: 0,
     cameraY: 0,
+    playerFacingRight: true,
+    playerHp: 100,
+    playerMaxHp: 100,
+    gold: 0,
+    combatSystem: null,
+    enemyManager: null,
+    particleSystem: null,
+    lootManager: null,
   });
   const [initStatus, setInitStatus] = useState('Initializing...');
 
   const controls = useControls();
   const controlsRef = useRef(controls); // Store in ref to avoid stale closure
   const updatePlayerPosition = useGameStore(state => state.updatePlayerPosition);
+  const updatePlayerStats = useGameStore(state => state.updatePlayerStats);
   const playerState = useGameStore(state => state.player);
   const lighting = useGameStore(state => state.lighting);
 
@@ -84,6 +100,19 @@ export const GameCanvas = () => {
       gameDataRef.current.playerX = spawn.x;
       gameDataRef.current.playerY = spawn.y;
 
+      // Initialize game systems
+      const combatSystem = new CombatSystem();
+      const enemyManager = new EnemyManager(map, TILE_SIZE);
+      const particleSystem = new ParticleSystem();
+      const lootManager = new LootManager();
+
+      gameDataRef.current.combatSystem = combatSystem;
+      gameDataRef.current.enemyManager = enemyManager;
+      gameDataRef.current.particleSystem = particleSystem;
+      gameDataRef.current.lootManager = lootManager;
+
+      console.log('[GameCanvas] Systems initialized:', { combatSystem, enemyManager, particleSystem, lootManager });
+
       // Create containers
       const worldContainer = new PIXI.Container();
       const uiContainer = new PIXI.Container();
@@ -92,6 +121,16 @@ export const GameCanvas = () => {
       const mapGraphics = new PIXI.Graphics();
       mapGraphicsRef.current = mapGraphics;
       worldContainer.addChild(mapGraphics);
+
+      // Create enemy container
+      const enemyContainer = new PIXI.Container();
+      enemyContainerRef.current = enemyContainer;
+      worldContainer.addChild(enemyContainer);
+
+      // Create loot container
+      const lootContainer = new PIXI.Container();
+      lootContainerRef.current = lootContainer;
+      worldContainer.addChild(lootContainer);
 
       // Create player sprite
       const playerSprite = new PIXI.Sprite(textures.hero);
@@ -107,6 +146,11 @@ export const GameCanvas = () => {
         size: { width: playerSprite.width, height: playerSprite.height },
         scale: playerSprite.scale
       });
+
+      // Create particle graphics (rendered on top of player)
+      const particleGraphics = new PIXI.Graphics();
+      particleGraphicsRef.current = particleGraphics;
+      worldContainer.addChild(particleGraphics);
 
       // Create lighting overlay
       const lightingGraphics = new PIXI.Graphics();
@@ -186,8 +230,17 @@ export const GameCanvas = () => {
     const data = gameDataRef.current;
     const map = data.map;
     const playerSprite = playerSpriteRef.current;
+    const combatSystem = data.combatSystem;
+    const enemyManager = data.enemyManager;
+    const particleSystem = data.particleSystem;
+    const lootManager = data.lootManager;
 
-    if (!playerSprite || !map) return;
+    if (!playerSprite || !map || !combatSystem || !enemyManager || !particleSystem || !lootManager) return;
+
+    // Update systems
+    combatSystem.update(dt);
+    particleSystem.update(dt);
+    lootManager.update(dt);
 
     // Handle movement
     let vx = 0;
@@ -224,12 +277,65 @@ export const GameCanvas = () => {
 
       // Update facing
       if (vx !== 0) {
-        playerSprite.scale.x = vx > 0 ? 1 : -1;
+        const facingRight = vx > 0;
+        data.playerFacingRight = facingRight;
+        playerSprite.scale.x = facingRight ? 2 : -2;
       }
 
       // Update store (throttled)
       if (Math.random() < 0.1) {
         updatePlayerPosition(newX, newY);
+        updatePlayerStats({
+          hp: data.playerHp,
+          gold: data.gold,
+        });
+      }
+    }
+
+    // Handle attack
+    if (currentControls.attack) {
+      if (combatSystem.tryAttack(data.playerX, data.playerY, data.playerFacingRight)) {
+        // Create slash effect
+        const attackAngle = data.playerFacingRight ? 0 : Math.PI;
+        const slashX = data.playerX + Math.cos(attackAngle) * 50;
+        const slashY = data.playerY;
+        particleSystem.createSlashEffect(slashX, slashY, attackAngle);
+
+        // Check hits
+        const hitbox = combatSystem.getAttackHitbox(data.playerX, data.playerY);
+        if (hitbox) {
+          const hits = enemyManager.checkCombatHits(hitbox);
+          for (const hit of hits) {
+            particleSystem.createDamageEffect(hit.enemy.x, hit.enemy.y);
+            if (hit.died) {
+              particleSystem.createDeathEffect(hit.enemy.x, hit.enemy.y);
+              // Drop loot
+              lootManager.spawnLoot(hit.enemy.x, hit.enemy.y);
+            }
+          }
+        }
+      }
+    }
+
+    // Handle item pickup
+    if (currentControls.interact) {
+      const collected = lootManager.checkPickups(data.playerX, data.playerY);
+      for (const item of collected) {
+        data.gold += item.value;
+        if (item.heal > 0) {
+          data.playerHp = Math.min(data.playerMaxHp, data.playerHp + item.heal);
+        }
+        particleSystem.createLootEffect(data.playerX, data.playerY);
+      }
+    }
+
+    // Update enemies
+    const enemyActions = enemyManager.update(dt, data.playerX, data.playerY);
+    for (const action of enemyActions) {
+      if (action.type === 'attack') {
+        // Player takes damage
+        data.playerHp = Math.max(0, data.playerHp - action.damage);
+        particleSystem.createDamageEffect(data.playerX, data.playerY);
       }
     }
 
@@ -244,15 +350,16 @@ export const GameCanvas = () => {
     worldContainer.x = -Math.floor(data.cameraX);
     worldContainer.y = -Math.floor(data.cameraY);
 
-    // Render map
+    // Render everything
     renderMap();
-
-    // Render lighting
+    renderEnemies();
+    renderLoot();
+    renderParticles();
     renderLighting();
   };
 
   /**
-   * Render the tilemap
+   * Render the tilemap - Enhanced Tier 1 Edition
    */
   const renderMap = () => {
     const g = mapGraphicsRef.current;
@@ -276,11 +383,134 @@ export const GameCanvas = () => {
         const py = y * TILE_SIZE;
 
         if (tile === map.TILE_FLOOR) {
-          g.rect(px, py, TILE_SIZE, TILE_SIZE).fill(0x3d5a40);
+          // Enhanced floor with subtle variation
+          const variation = ((x + y) % 3) * 0.05;
+          const baseColor = 0x3d5a40;
+          g.rect(px, py, TILE_SIZE, TILE_SIZE).fill(baseColor);
+
+          // Add subtle grid
+          g.rect(px, py, TILE_SIZE, TILE_SIZE).stroke({
+            color: 0x2a3d2e,
+            width: 1,
+            alpha: 0.3,
+          });
         } else if (tile === map.TILE_WALL) {
+          // Enhanced walls with depth
           g.rect(px, py, TILE_SIZE, TILE_SIZE).fill(0x2b2d42);
+
+          // Add highlight on top edge
+          g.rect(px, py, TILE_SIZE, 4).fill({ color: 0x3f4153, alpha: 0.6 });
+
+          // Add border
+          g.rect(px, py, TILE_SIZE, TILE_SIZE).stroke({
+            color: 0x1a1c2e,
+            width: 2,
+          });
         }
       }
+    }
+  };
+
+  /**
+   * Render enemies
+   */
+  const renderEnemies = () => {
+    const container = enemyContainerRef.current;
+    const data = gameDataRef.current;
+    const enemyManager = data.enemyManager;
+    const textures = data.textures;
+
+    if (!container || !enemyManager || !textures) return;
+
+    // Clear existing sprites
+    container.removeChildren();
+
+    // Create sprite for each enemy
+    const enemies = enemyManager.getEnemies();
+    for (const enemy of enemies) {
+      const texture = textures[enemy.type] || textures.skel;
+      const sprite = new PIXI.Sprite(texture);
+      sprite.anchor.set(0.5);
+      sprite.x = enemy.x;
+      sprite.y = enemy.y;
+      sprite.scale.set(2, 2);
+
+      // Flash red when stunned
+      if (enemy.stunned) {
+        sprite.tint = 0xff3333;
+      }
+
+      container.addChild(sprite);
+
+      // Draw health bar
+      const hpBar = new PIXI.Graphics();
+      const hpPercent = enemy.getHealthPercent();
+      const barWidth = 40;
+      const barHeight = 4;
+      const barX = enemy.x - barWidth / 2;
+      const barY = enemy.y - 30;
+
+      // Background
+      hpBar.rect(barX, barY, barWidth, barHeight).fill(0x000000);
+      // Health fill
+      hpBar.rect(barX, barY, barWidth * hpPercent, barHeight).fill(0xff0000);
+
+      container.addChild(hpBar);
+    }
+  };
+
+  /**
+   * Render loot items
+   */
+  const renderLoot = () => {
+    const container = lootContainerRef.current;
+    const data = gameDataRef.current;
+    const lootManager = data.lootManager;
+
+    if (!container || !lootManager) return;
+
+    // Clear existing items
+    container.removeChildren();
+
+    // Render each loot item
+    const items = lootManager.getItems();
+    for (const item of items) {
+      const bobOffset = item.getBobOffset();
+      const graphics = new PIXI.Graphics();
+
+      // Draw loot as colored circle
+      graphics.circle(item.x, item.y + bobOffset, item.properties.size).fill(item.properties.color);
+
+      // Add glow/outline
+      graphics.circle(item.x, item.y + bobOffset, item.properties.size + 2).stroke({
+        color: 0xffffff,
+        width: 1,
+        alpha: 0.5,
+      });
+
+      container.addChild(graphics);
+    }
+  };
+
+  /**
+   * Render particle effects
+   */
+  const renderParticles = () => {
+    const g = particleGraphicsRef.current;
+    const data = gameDataRef.current;
+    const particleSystem = data.particleSystem;
+
+    if (!g || !particleSystem) return;
+
+    g.clear();
+
+    const particles = particleSystem.getParticles();
+    for (const particle of particles) {
+      const alpha = particle.getAlpha();
+      g.circle(particle.x, particle.y, particle.size).fill({
+        color: particle.color,
+        alpha: alpha,
+      });
     }
   };
 

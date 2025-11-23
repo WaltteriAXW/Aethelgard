@@ -51,14 +51,21 @@ export const HUD = () => {
             <div className="bar-text">Level {player.level}</div>
           </div>
         </div>
+
+        <div className="stat-row" style={{ marginTop: '12px' }}>
+          <div className="stat-label" style={{ color: '#ffaa00' }}>💰 GOLD</div>
+          <div className="bar-text" style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffaa00' }}>
+            {player.gold || 0}
+          </div>
+        </div>
       </div>
 
       {/* Top Right - Controls & Debug */}
       <div className="hud-section top-right">
         <div className="controls-info">
           <div className="control-hint">WASD - Move</div>
-          <div className="control-hint">SPACE - Attack</div>
-          <div className="control-hint">SHIFT - Dash</div>
+          <div className="control-hint">SPACE/J - Attack</div>
+          <div className="control-hint">E - Pickup Loot</div>
           <div className="control-hint">L - Toggle Lighting</div>
         </div>
 

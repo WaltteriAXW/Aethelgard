@@ -21,6 +21,7 @@ export const useGameStore = create((set, get) => ({
     level: 1,
     class: 'WARRIOR',
     isDead: false,
+    gold: 0,
   },
 
   // ============ CAMERA ============
@@ -109,6 +110,14 @@ export const useGameStore = create((set, get) => ({
       player: { ...state.player, xp: newXP }
     };
   }),
+
+  addGold: (amount) => set((state) => ({
+    player: { ...state.player, gold: state.player.gold + amount }
+  })),
+
+  updatePlayerStats: (stats) => set((state) => ({
+    player: { ...state.player, ...stats }
+  })),
 
   // Camera actions
   updateCamera: (x, y) => set({ camera: { x, y, shake: get().camera.shake } }),
