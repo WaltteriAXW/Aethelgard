@@ -1,0 +1,259 @@
+import { useEffect, useRef } from 'react';
+import * as PIXI from 'pixi.js';
+import { generateAllTextures } from './utils/textureGenerator';
+import { MapSystem } from './systems/MapSystem';
+import { useGameStore } from './stores/useGameStore';
+import { useControls } from './hooks/useControls';
+
+/**
+ * GameCanvas V2 - Direct Pixi.js Integration
+ * More reliable than @pixi/react for complex games
+ */
+export const GameCanvas = () => {
+  const canvasRef = useRef(null);
+  const appRef = useRef(null);
+  const playerSpriteRef = useRef(null);
+  const mapGraphicsRef = useRef(null);
+  const lightingGraphicsRef = useRef(null);
+  const gameDataRef = useRef({
+    map: null,
+    textures: null,
+    playerX: 400,
+    playerY: 300,
+    cameraX: 0,
+    cameraY: 0,
+  });
+
+  const controls = useControls();
+  const updatePlayerPosition = useGameStore(state => state.updatePlayerPosition);
+  const playerState = useGameStore(state => state.player);
+  const lighting = useGameStore(state => state.lighting);
+
+  const CANVAS_WIDTH = 1024;
+  const CANVAS_HEIGHT = 576;
+  const TILE_SIZE = 48;
+  const SPEED = 220;
+
+  /**
+   * Initialize Pixi.js Application
+   */
+  useEffect(() => {
+    if (!canvasRef.current || appRef.current) return;
+
+    console.log('[GameCanvas] Initializing Pixi.js...');
+
+    // Create Pixi Application
+    const app = new PIXI.Application();
+    appRef.current = app;
+
+    app.init({
+      width: CANVAS_WIDTH,
+      height: CANVAS_HEIGHT,
+      background: 0x0a0a0a,
+      antialias: false,
+    }).then(() => {
+      canvasRef.current.appendChild(app.canvas);
+
+      // Generate textures
+      const textures = generateAllTextures();
+      gameDataRef.current.textures = textures;
+
+      // Generate map
+      const map = new MapSystem(50, 50);
+      const spawn = map.generate();
+      gameDataRef.current.map = map;
+      gameDataRef.current.playerX = spawn.x;
+      gameDataRef.current.playerY = spawn.y;
+
+      // Create containers
+      const worldContainer = new PIXI.Container();
+      const uiContainer = new PIXI.Container();
+
+      // Create map graphics
+      const mapGraphics = new PIXI.Graphics();
+      mapGraphicsRef.current = mapGraphics;
+      worldContainer.addChild(mapGraphics);
+
+      // Create player sprite
+      const playerSprite = new PIXI.Sprite(textures.hero);
+      playerSprite.anchor.set(0.5);
+      playerSprite.x = spawn.x;
+      playerSprite.y = spawn.y;
+      playerSpriteRef.current = playerSprite;
+      worldContainer.addChild(playerSprite);
+
+      // Create lighting overlay
+      const lightingGraphics = new PIXI.Graphics();
+      lightingGraphicsRef.current = lightingGraphics;
+      uiContainer.addChild(lightingGraphics);
+
+      app.stage.addChild(worldContainer);
+      app.stage.addChild(uiContainer);
+
+      // Update store
+      updatePlayerPosition(spawn.x, spawn.y);
+      useGameStore.getState().startGame();
+
+      console.log('[GameCanvas] ✅ Initialized!');
+
+      // Start game loop
+      app.ticker.add((ticker) => gameLoop(ticker.deltaTime));
+    });
+
+    return () => {
+      if (appRef.current) {
+        appRef.current.destroy(true, { children: true });
+        appRef.current = null;
+      }
+    };
+  }, []);
+
+  /**
+   * Game Loop - 60 FPS
+   */
+  const gameLoop = (delta) => {
+    const dt = delta / 60;
+    const data = gameDataRef.current;
+    const map = data.map;
+    const playerSprite = playerSpriteRef.current;
+
+    if (!playerSprite || !map) return;
+
+    // Handle movement
+    let vx = 0;
+    let vy = 0;
+
+    if (controls.up) vy -= 1;
+    if (controls.down) vy += 1;
+    if (controls.left) vx -= 1;
+    if (controls.right) vx += 1;
+
+    // Normalize diagonal
+    if (vx !== 0 && vy !== 0) {
+      const mag = Math.sqrt(vx * vx + vy * vy);
+      vx /= mag;
+      vy /= mag;
+    }
+
+    // Move player
+    const newX = data.playerX + vx * SPEED * dt;
+    const newY = data.playerY + vy * SPEED * dt;
+
+    // Simple collision (check if tile is walkable)
+    const tileX = Math.floor(newX / TILE_SIZE);
+    const tileY = Math.floor(newY / TILE_SIZE);
+    const canMove = map.get(tileX, tileY) === map.TILE_FLOOR;
+
+    if (canMove) {
+      data.playerX = newX;
+      data.playerY = newY;
+      playerSprite.x = newX;
+      playerSprite.y = newY;
+
+      // Update facing
+      if (vx !== 0) {
+        playerSprite.scale.x = vx > 0 ? 1 : -1;
+      }
+
+      // Update store (throttled)
+      if (Math.random() < 0.1) {
+        updatePlayerPosition(newX, newY);
+      }
+    }
+
+    // Update camera
+    const targetCamX = data.playerX - CANVAS_WIDTH / 2;
+    const targetCamY = data.playerY - CANVAS_HEIGHT / 2;
+    data.cameraX += (targetCamX - data.cameraX) * 0.1;
+    data.cameraY += (targetCamY - data.cameraY) * 0.1;
+
+    // Move world container
+    const worldContainer = appRef.current.stage.children[0];
+    worldContainer.x = -Math.floor(data.cameraX);
+    worldContainer.y = -Math.floor(data.cameraY);
+
+    // Render map
+    renderMap();
+
+    // Render lighting
+    renderLighting();
+  };
+
+  /**
+   * Render the tilemap
+   */
+  const renderMap = () => {
+    const g = mapGraphicsRef.current;
+    const data = gameDataRef.current;
+    const map = data.map;
+
+    if (!g || !map) return;
+
+    g.clear();
+
+    // Only render visible tiles
+    const startX = Math.max(0, Math.floor(data.cameraX / TILE_SIZE) - 1);
+    const endX = Math.min(map.width, Math.ceil((data.cameraX + CANVAS_WIDTH) / TILE_SIZE) + 1);
+    const startY = Math.max(0, Math.floor(data.cameraY / TILE_SIZE) - 1);
+    const endY = Math.min(map.height, Math.ceil((data.cameraY + CANVAS_HEIGHT) / TILE_SIZE) + 1);
+
+    for (let y = startY; y < endY; y++) {
+      for (let x = startX; x < endX; x++) {
+        const tile = map.get(x, y);
+        const px = x * TILE_SIZE;
+        const py = y * TILE_SIZE;
+
+        if (tile === map.TILE_FLOOR) {
+          g.rect(px, py, TILE_SIZE, TILE_SIZE);
+          g.fill({ color: 0x3d5a40 });
+        } else if (tile === map.TILE_WALL) {
+          g.rect(px, py, TILE_SIZE, TILE_SIZE);
+          g.fill({ color: 0x2b2d42 });
+        }
+      }
+    }
+  };
+
+  /**
+   * Render lighting overlay
+   */
+  const renderLighting = () => {
+    const g = lightingGraphicsRef.current;
+    const data = gameDataRef.current;
+
+    if (!g) return;
+
+    g.clear();
+
+    if (!lighting.enabled) return;
+
+    // Fill screen with darkness
+    g.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    g.fill({ color: 0x000000, alpha: lighting.darknessOpacity });
+
+    // Draw vision circle around player (screen space)
+    const playerScreenX = data.playerX - data.cameraX;
+    const playerScreenY = data.playerY - data.cameraY;
+
+    // Create light gradient effect
+    g.circle(playerScreenX, playerScreenY, lighting.visionRadius);
+    g.fill({
+      color: 0x000000,
+      alpha: 0,
+    });
+
+    // Use blend mode to create fog effect
+    g.blendMode = 'multiply';
+  };
+
+  return (
+    <div
+      ref={canvasRef}
+      style={{
+        width: `${CANVAS_WIDTH}px`,
+        height: `${CANVAS_HEIGHT}px`,
+        margin: '0 auto',
+      }}
+    />
+  );
+};

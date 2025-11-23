@@ -1,0 +1,177 @@
+/* HUD Styles - Tier 1 Edition */
+
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  font-family: 'Courier New', monospace;
+  color: #fff;
+}
+
+.hud-section {
+  position: absolute;
+  padding: 20px;
+  pointer-events: all;
+}
+
+/* ========== TOP LEFT - Stats ========== */
+.top-left {
+  top: 0;
+  left: 0;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.4));
+  border-bottom-right-radius: 8px;
+  min-width: 300px;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.stat-label {
+  min-width: 60px;
+  font-weight: bold;
+  font-size: 14px;
+  color: #8ecae6;
+}
+
+.bar-container {
+  position: relative;
+  flex: 1;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid #457b9d;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.hp-bar {
+  background: linear-gradient(90deg, #e63946, #ff6b6b);
+  box-shadow: 0 0 10px rgba(230, 57, 70, 0.5);
+}
+
+.mana-bar {
+  background: linear-gradient(90deg, #457b9d, #8ecae6);
+  box-shadow: 0 0 10px rgba(69, 123, 157, 0.5);
+}
+
+.xp-bar {
+  background: linear-gradient(90deg, #ffb703, #fb8500);
+  box-shadow: 0 0 10px rgba(255, 183, 3, 0.5);
+}
+
+.bar-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+/* ========== TOP RIGHT - Controls & Debug ========== */
+.top-right {
+  top: 0;
+  right: 0;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.8));
+  border-bottom-left-radius: 8px;
+  min-width: 280px;
+}
+
+.controls-info {
+  margin-bottom: 16px;
+}
+
+.control-hint {
+  font-size: 12px;
+  color: #adb5bd;
+  margin-bottom: 4px;
+}
+
+.debug-panel {
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  padding-top: 12px;
+}
+
+.debug-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffb703;
+  margin-bottom: 8px;
+}
+
+.debug-button {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: #457b9d;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.debug-button:hover {
+  background: #1d3557;
+}
+
+.slider-label {
+  display: block;
+  font-size: 11px;
+  color: #adb5bd;
+  margin-bottom: 8px;
+}
+
+.slider-label input[type="range"] {
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* ========== BOTTOM CENTER - Class ========== */
+.bottom-center {
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+  padding: 12px 24px;
+}
+
+.class-display {
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #ffb703;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .hud-section {
+    font-size: 12px;
+  }
+
+  .top-left,
+  .top-right {
+    min-width: 200px;
+  }
+
+  .debug-panel {
+    display: none; /* Hide debug on mobile */
+  }
+}
