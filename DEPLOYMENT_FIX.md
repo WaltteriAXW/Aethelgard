@@ -16,8 +16,9 @@ The black screen issue was caused by **missing build process**:
 Created automated build and deployment:
 - ✅ Installs Node.js dependencies
 - ✅ Runs `npm run build` to compile React app with Vite
-- ✅ Deploys compiled `dist/` folder to GitHub Pages
+- ✅ Pushes compiled `dist/` folder to `gh-pages` branch
 - ✅ Triggers on push to any `claude/*` branch
+- ✅ Uses simpler deployment method (no environment protection rules)
 
 ### 2. Vite Base Path Configuration
 
@@ -32,8 +33,10 @@ Updated `vite.config.js`:
    - Navigate to: `https://github.com/WaltteriAXW/Aethelgard/settings/pages`
 
 2. **Configure Source:**
-   - **Source:** GitHub Actions (NOT "Deploy from a branch")
-   - This allows the workflow to handle deployment
+   - **Source:** Deploy from a branch
+   - **Branch:** Select `gh-pages`
+   - **Folder:** `/ (root)`
+   - Click **Save**
 
 3. **Wait for Build:**
    - Push this commit to trigger the workflow
@@ -76,7 +79,7 @@ No errors should appear.
 - Hard refresh: Ctrl+Shift+R (multiple times)
 - Try incognito/private mode
 - Check console for JavaScript errors
-- Verify GitHub Pages is set to "GitHub Actions" source
+- Verify GitHub Pages is set to deploy from `gh-pages` branch
 
 ### If you see 404 errors for assets:
 - Verify `base: '/Aethelgard/'` is in `vite.config.js`
