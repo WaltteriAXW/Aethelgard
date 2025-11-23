@@ -6,6 +6,8 @@ import { CombatSystem } from './systems/CombatSystem';
 import { EnemyManager } from './systems/EnemySystem';
 import { ParticleSystem } from './systems/ParticleSystem';
 import { LootManager } from './systems/LootSystem';
+import { FloatingTextManager } from './systems/AnimationSystem';
+import { CameraEffects } from './systems/CameraEffects';
 import { useGameStore } from './stores/useGameStore';
 import { useControls } from './hooks/useControls';
 
@@ -22,6 +24,8 @@ export const GameCanvas = () => {
   const enemyContainerRef = useRef(null);
   const particleGraphicsRef = useRef(null);
   const lootContainerRef = useRef(null);
+  const floatingTextGraphicsRef = useRef(null);
+  const flashGraphicsRef = useRef(null);
   const gameDataRef = useRef({
     map: null,
     textures: null,
@@ -37,6 +41,8 @@ export const GameCanvas = () => {
     enemyManager: null,
     particleSystem: null,
     lootManager: null,
+    floatingTextManager: null,
+    cameraEffects: null,
   });
   const [initStatus, setInitStatus] = useState('Initializing...');
 
@@ -105,13 +111,24 @@ export const GameCanvas = () => {
       const enemyManager = new EnemyManager(map, TILE_SIZE);
       const particleSystem = new ParticleSystem();
       const lootManager = new LootManager();
+      const floatingTextManager = new FloatingTextManager();
+      const cameraEffects = new CameraEffects();
 
       gameDataRef.current.combatSystem = combatSystem;
       gameDataRef.current.enemyManager = enemyManager;
       gameDataRef.current.particleSystem = particleSystem;
       gameDataRef.current.lootManager = lootManager;
+      gameDataRef.current.floatingTextManager = floatingTextManager;
+      gameDataRef.current.cameraEffects = cameraEffects;
 
-      console.log('[GameCanvas] Systems initialized:', { combatSystem, enemyManager, particleSystem, lootManager });
+      console.log('[GameCanvas] Systems initialized:', {
+        combatSystem,
+        enemyManager,
+        particleSystem,
+        lootManager,
+        floatingTextManager,
+        cameraEffects
+      });
 
       // Create containers
       const worldContainer = new PIXI.Container();
@@ -152,10 +169,20 @@ export const GameCanvas = () => {
       particleGraphicsRef.current = particleGraphics;
       worldContainer.addChild(particleGraphics);
 
+      // Create floating text graphics (rendered on top of particles)
+      const floatingTextGraphics = new PIXI.Graphics();
+      floatingTextGraphicsRef.current = floatingTextGraphics;
+      worldContainer.addChild(floatingTextGraphics);
+
       // Create lighting overlay
       const lightingGraphics = new PIXI.Graphics();
       lightingGraphicsRef.current = lightingGraphics;
       uiContainer.addChild(lightingGraphics);
+
+      // Create flash overlay (for screen flash effects)
+      const flashGraphics = new PIXI.Graphics();
+      flashGraphicsRef.current = flashGraphics;
+      uiContainer.addChild(flashGraphics);
 
       app.stage.addChild(worldContainer);
       app.stage.addChild(uiContainer);
@@ -234,13 +261,17 @@ export const GameCanvas = () => {
     const enemyManager = data.enemyManager;
     const particleSystem = data.particleSystem;
     const lootManager = data.lootManager;
+    const floatingTextManager = data.floatingTextManager;
+    const cameraEffects = data.cameraEffects;
 
-    if (!playerSprite || !map || !combatSystem || !enemyManager || !particleSystem || !lootManager) return;
+    if (!playerSprite || !map || !combatSystem || !enemyManager || !particleSystem || !lootManager || !floatingTextManager || !cameraEffects) return;
 
     // Update systems
     combatSystem.update(dt);
     particleSystem.update(dt);
     lootManager.update(dt);
+    floatingTextManager.update(dt);
+    cameraEffects.update(dt);
 
     // Handle movement
     let vx = 0;
@@ -301,14 +332,27 @@ export const GameCanvas = () => {
         const slashY = data.playerY;
         particleSystem.createSlashEffect(slashX, slashY, attackAngle);
 
+        // Light screen shake for attack
+        cameraEffects.addShake(0.3);
+
         // Check hits
         const hitbox = combatSystem.getAttackHitbox(data.playerX, data.playerY);
         if (hitbox) {
           const hits = enemyManager.checkCombatHits(hitbox);
           for (const hit of hits) {
+            // Damage particles and text
             particleSystem.createDamageEffect(hit.enemy.x, hit.enemy.y);
+            floatingTextManager.addDamageNumber(hit.enemy.x, hit.enemy.y - 20, hitbox.damage);
+
+            // Screen shake on hit
+            cameraEffects.addShake(0.5);
+
             if (hit.died) {
+              // Death effects
               particleSystem.createDeathEffect(hit.enemy.x, hit.enemy.y);
+              cameraEffects.addShake(0.8); // Bigger shake on death
+              cameraEffects.addFlash(0.3, 0xff4444); // Red flash
+
               // Drop loot
               lootManager.spawnLoot(hit.enemy.x, hit.enemy.y);
             }
@@ -321,9 +365,13 @@ export const GameCanvas = () => {
     if (currentControls.interact) {
       const collected = lootManager.checkPickups(data.playerX, data.playerY);
       for (const item of collected) {
-        data.gold += item.value;
+        if (item.value > 0) {
+          data.gold += item.value;
+          floatingTextManager.addGoldNumber(data.playerX, data.playerY - 20, item.value);
+        }
         if (item.heal > 0) {
           data.playerHp = Math.min(data.playerMaxHp, data.playerHp + item.heal);
+          floatingTextManager.addHealNumber(data.playerX, data.playerY - 20, item.heal);
         }
         particleSystem.createLootEffect(data.playerX, data.playerY);
       }
@@ -336,26 +384,36 @@ export const GameCanvas = () => {
         // Player takes damage
         data.playerHp = Math.max(0, data.playerHp - action.damage);
         particleSystem.createDamageEffect(data.playerX, data.playerY);
+        floatingTextManager.addDamageNumber(data.playerX, data.playerY - 30, action.damage);
+
+        // Screen shake and red flash when hit
+        cameraEffects.addShake(0.6);
+        cameraEffects.addFlash(0.4, 0xff0000);
       }
     }
 
-    // Update camera
+    // Update camera with shake
     const targetCamX = data.playerX - CANVAS_WIDTH / 2;
     const targetCamY = data.playerY - CANVAS_HEIGHT / 2;
     data.cameraX += (targetCamX - data.cameraX) * 0.1;
     data.cameraY += (targetCamY - data.cameraY) * 0.1;
 
-    // Move world container
+    // Apply shake offset
+    const shake = cameraEffects.getShakeOffset();
+
+    // Move world container with shake
     const worldContainer = appRef.current.stage.children[0];
-    worldContainer.x = -Math.floor(data.cameraX);
-    worldContainer.y = -Math.floor(data.cameraY);
+    worldContainer.x = -Math.floor(data.cameraX) + shake.x;
+    worldContainer.y = -Math.floor(data.cameraY) + shake.y;
 
     // Render everything
     renderMap();
     renderEnemies();
     renderLoot();
     renderParticles();
+    renderFloatingText();
     renderLighting();
+    renderFlash();
   };
 
   /**
@@ -493,7 +551,7 @@ export const GameCanvas = () => {
   };
 
   /**
-   * Render particle effects
+   * Render particle effects - ENHANCED with glow and trails
    */
   const renderParticles = () => {
     const g = particleGraphicsRef.current;
@@ -507,9 +565,102 @@ export const GameCanvas = () => {
     const particles = particleSystem.getParticles();
     for (const particle of particles) {
       const alpha = particle.getAlpha();
-      g.circle(particle.x, particle.y, particle.size).fill({
+      const size = particle.getSize();
+
+      // Draw trail if enabled
+      if (particle.trail && particle.trailHistory.length > 0) {
+        for (let i = 0; i < particle.trailHistory.length; i++) {
+          const pos = particle.trailHistory[i];
+          const trailAlpha = alpha * (i / particle.trailHistory.length) * 0.5;
+          const trailSize = size * (i / particle.trailHistory.length);
+          g.circle(pos.x, pos.y, trailSize).fill({
+            color: particle.color,
+            alpha: trailAlpha,
+          });
+        }
+      }
+
+      // Draw main particle
+      g.circle(particle.x, particle.y, size).fill({
         color: particle.color,
         alpha: alpha,
+      });
+
+      // Draw glow if enabled
+      if (particle.glow) {
+        g.circle(particle.x, particle.y, size + 4).fill({
+          color: particle.color,
+          alpha: alpha * 0.3,
+        });
+      }
+    }
+  };
+
+  /**
+   * Render floating text (damage numbers, gold, etc)
+   */
+  const renderFloatingText = () => {
+    const g = floatingTextGraphicsRef.current;
+    const data = gameDataRef.current;
+    const floatingTextManager = data.floatingTextManager;
+
+    if (!g || !floatingTextManager) return;
+
+    g.clear();
+
+    const texts = floatingTextManager.getTexts();
+    for (const text of texts) {
+      const alpha = text.getAlpha();
+      const scale = text.getScale();
+      const size = text.size * scale;
+
+      // Draw shadow
+      g.text({
+        text: text.text,
+        x: text.x + 2,
+        y: text.y + 2,
+        style: {
+          fontFamily: 'monospace',
+          fontSize: size,
+          fill: 0x000000,
+          fontWeight: 'bold',
+          alpha: alpha * 0.5,
+        },
+      });
+
+      // Draw main text
+      g.text({
+        text: text.text,
+        x: text.x,
+        y: text.y,
+        style: {
+          fontFamily: 'monospace',
+          fontSize: size,
+          fill: text.color,
+          fontWeight: 'bold',
+          alpha: alpha,
+        },
+      });
+    }
+  };
+
+  /**
+   * Render flash overlay (screen flash effects)
+   */
+  const renderFlash = () => {
+    const g = flashGraphicsRef.current;
+    const data = gameDataRef.current;
+    const cameraEffects = data.cameraEffects;
+
+    if (!g || !cameraEffects) return;
+
+    g.clear();
+
+    const flash = cameraEffects.getFlash();
+    if (flash.intensity > 0) {
+      g.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT).fill({
+        color: flash.color,
+        alpha: flash.intensity,
       });
     }
   };
