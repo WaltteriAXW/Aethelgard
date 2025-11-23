@@ -33,6 +33,9 @@ export const Player = ({ texture, map }) => {
   // Attack state
   const attackCooldown = useRef(0);
 
+  // Toggle states (to prevent rapid toggling)
+  const wasTogglingLighting = useRef(false);
+
   /**
    * Check if position collides with walls
    */
@@ -42,9 +45,10 @@ export const Player = ({ texture, map }) => {
     const tileX = Math.floor(newX / TILE_SIZE);
     const tileY = Math.floor(newY / TILE_SIZE);
 
-    // Check if tile is walkable (assuming map has a `get` method)
-    if (map.get && map.get(tileX, tileY) === 1) {
-      return false; // Wall
+    // FIXED: Check if tile is walkable
+    // TILE_FLOOR = 1 is walkable, TILE_WALL = 2 and TILE_VOID = 0 are not
+    if (map.get && map.get(tileX, tileY) !== map.TILE_FLOOR) {
+      return false; // Not walkable (wall or void)
     }
 
     return true;
@@ -127,9 +131,12 @@ export const Player = ({ texture, map }) => {
       console.log('[Player] Attack!');
     }
 
-    // Debug: Toggle lighting
-    if (controls.toggleLighting) {
+    // FIXED: Toggle lighting (prevent rapid toggling)
+    if (controls.toggleLighting && !wasTogglingLighting.current) {
       useGameStore.getState().toggleDarkness();
+      wasTogglingLighting.current = true;
+    } else if (!controls.toggleLighting) {
+      wasTogglingLighting.current = false;
     }
   });
 
