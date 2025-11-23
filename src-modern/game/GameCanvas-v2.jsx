@@ -26,9 +26,15 @@ export const GameCanvas = () => {
   const [initStatus, setInitStatus] = useState('Initializing...');
 
   const controls = useControls();
+  const controlsRef = useRef(controls); // Store in ref to avoid stale closure
   const updatePlayerPosition = useGameStore(state => state.updatePlayerPosition);
   const playerState = useGameStore(state => state.player);
   const lighting = useGameStore(state => state.lighting);
+
+  // Update controls ref whenever controls change
+  useEffect(() => {
+    controlsRef.current = controls;
+  }, [controls]);
 
   const CANVAS_WIDTH = 1024;
   const CANVAS_HEIGHT = 576;
@@ -187,10 +193,12 @@ export const GameCanvas = () => {
     let vx = 0;
     let vy = 0;
 
-    if (controls.up) vy -= 1;
-    if (controls.down) vy += 1;
-    if (controls.left) vx -= 1;
-    if (controls.right) vx += 1;
+    // Use controlsRef to get current controls (avoid stale closure)
+    const currentControls = controlsRef.current;
+    if (currentControls.up) vy -= 1;
+    if (currentControls.down) vy += 1;
+    if (currentControls.left) vx -= 1;
+    if (currentControls.right) vx += 1;
 
     // Normalize diagonal
     if (vx !== 0 && vy !== 0) {
