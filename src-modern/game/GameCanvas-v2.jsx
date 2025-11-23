@@ -49,7 +49,7 @@ export const GameCanvas = () => {
     app.init({
       width: CANVAS_WIDTH,
       height: CANVAS_HEIGHT,
-      background: 0x0a0a0a,
+      background: 0x1a1a1a, // Slightly lighter background for better visibility
       antialias: false,
     }).then(() => {
       canvasRef.current.appendChild(app.canvas);
@@ -90,11 +90,55 @@ export const GameCanvas = () => {
       app.stage.addChild(worldContainer);
       app.stage.addChild(uiContainer);
 
+      // Initialize camera to center on player
+      gameDataRef.current.cameraX = spawn.x - CANVAS_WIDTH / 2;
+      gameDataRef.current.cameraY = spawn.y - CANVAS_HEIGHT / 2;
+      worldContainer.x = -Math.floor(gameDataRef.current.cameraX);
+      worldContainer.y = -Math.floor(gameDataRef.current.cameraY);
+
+      // Do initial render BEFORE starting game loop
+      // Render initial map state
+      const startX = Math.max(0, Math.floor(gameDataRef.current.cameraX / TILE_SIZE) - 1);
+      const endX = Math.min(map.width, Math.ceil((gameDataRef.current.cameraX + CANVAS_WIDTH) / TILE_SIZE) + 1);
+      const startY = Math.max(0, Math.floor(gameDataRef.current.cameraY / TILE_SIZE) - 1);
+      const endY = Math.min(map.height, Math.ceil((gameDataRef.current.cameraY + CANVAS_HEIGHT) / TILE_SIZE) + 1);
+
+      let floorCount = 0;
+      let wallCount = 0;
+
+      for (let y = startY; y < endY; y++) {
+        for (let x = startX; x < endX; x++) {
+          const tile = map.get(x, y);
+          const px = x * TILE_SIZE;
+          const py = y * TILE_SIZE;
+
+          if (tile === map.TILE_FLOOR) {
+            mapGraphics.rect(px, py, TILE_SIZE, TILE_SIZE).fill(0x3d5a40);
+            floorCount++;
+          } else if (tile === map.TILE_WALL) {
+            mapGraphics.rect(px, py, TILE_SIZE, TILE_SIZE).fill(0x2b2d42);
+            wallCount++;
+          }
+        }
+      }
+
+      console.log('[GameCanvas] Initial render complete:', { floorCount, wallCount });
+
+      // DEBUG: Add a bright test rectangle at screen center to verify rendering
+      const testRect = new PIXI.Graphics();
+      testRect.rect(CANVAS_WIDTH / 2 - 50, CANVAS_HEIGHT / 2 - 50, 100, 100).fill(0xff0000); // Bright red
+      uiContainer.addChild(testRect);
+      console.log('[GameCanvas] DEBUG: Added red test rectangle at screen center');
+
       // Update store
       updatePlayerPosition(spawn.x, spawn.y);
       useGameStore.getState().startGame();
 
-      console.log('[GameCanvas] ✅ Initialized!');
+      console.log('[GameCanvas] ✅ Initialized!', {
+        playerPos: { x: spawn.x, y: spawn.y },
+        cameraPos: { x: gameDataRef.current.cameraX, y: gameDataRef.current.cameraY },
+        tiles: { startX, endX, startY, endY }
+      });
 
       // Start game loop
       app.ticker.add((ticker) => gameLoop(ticker.deltaTime));
