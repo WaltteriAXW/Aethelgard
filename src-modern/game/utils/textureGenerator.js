@@ -170,8 +170,24 @@ export function createTextureFromAscii(pixelArray, palette, scale = 3) {
 export function generateAllTextures() {
   const textures = {};
 
+  // Palette mapping (some sprites share palettes)
+  const paletteMapping = {
+    hero: 'hero',
+    skel: 'skel',
+    wraith: 'wraith',
+    golem: 'golem',
+    orb: 'loot', // orb uses loot palette
+  };
+
   for (const [name, definition] of Object.entries(definitions)) {
-    const palette = palettes[name];
+    const paletteName = paletteMapping[name];
+    const palette = palettes[paletteName];
+
+    if (!palette) {
+      console.error(`[TextureGen] Missing palette for ${name} (looked for ${paletteName})`);
+      continue;
+    }
+
     textures[name] = createTextureFromAscii(definition, palette, 3);
   }
 
