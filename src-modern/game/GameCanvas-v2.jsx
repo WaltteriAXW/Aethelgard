@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as PIXI from 'pixi.js';
 import { generateAllTextures } from './utils/textureGenerator';
 import { MapSystem } from './systems/MapSystem';
@@ -23,6 +23,7 @@ export const GameCanvas = () => {
     cameraX: 0,
     cameraY: 0,
   });
+  const [initStatus, setInitStatus] = useState('Initializing...');
 
   const controls = useControls();
   const updatePlayerPosition = useGameStore(state => state.updatePlayerPosition);
@@ -41,6 +42,7 @@ export const GameCanvas = () => {
     if (!canvasRef.current || appRef.current) return;
 
     console.log('[GameCanvas] Initializing Pixi.js...');
+    setInitStatus('Creating Pixi app...');
 
     // Create Pixi Application
     const app = new PIXI.Application();
@@ -52,7 +54,18 @@ export const GameCanvas = () => {
       background: 0x1a1a1a, // Slightly lighter background for better visibility
       antialias: false,
     }).then(() => {
+      console.log('[GameCanvas] App initialized, appending canvas...');
+      setInitStatus('App initialized, appending canvas...');
+
+      if (!canvasRef.current) {
+        console.error('[GameCanvas] ❌ canvasRef.current is null after init!');
+        setInitStatus('ERROR: canvasRef is null!');
+        return;
+      }
+
       canvasRef.current.appendChild(app.canvas);
+      console.log('[GameCanvas] Canvas appended to DOM');
+      setInitStatus('Canvas appended, generating textures...');
 
       // Generate textures
       const textures = generateAllTextures();
@@ -140,8 +153,14 @@ export const GameCanvas = () => {
         tiles: { startX, endX, startY, endY }
       });
 
+      setInitStatus('✅ Ready!');
+
       // Start game loop
       app.ticker.add((ticker) => gameLoop(ticker.deltaTime));
+    }).catch(error => {
+      console.error('[GameCanvas] ❌ Initialization failed:', error);
+      console.error('[GameCanvas] Error stack:', error.stack);
+      setInitStatus(`ERROR: ${error.message}`);
     });
 
     return () => {
@@ -298,13 +317,32 @@ export const GameCanvas = () => {
   };
 
   return (
-    <div
-      ref={canvasRef}
-      style={{
-        width: `${CANVAS_WIDTH}px`,
-        height: `${CANVAS_HEIGHT}px`,
-        margin: '0 auto',
-      }}
-    />
+    <div style={{ position: 'relative' }}>
+      <div
+        ref={canvasRef}
+        style={{
+          width: `${CANVAS_WIDTH}px`,
+          height: `${CANVAS_HEIGHT}px`,
+          margin: '0 auto',
+        }}
+      />
+      {/* Debug status overlay */}
+      <div style={{
+        position: 'absolute',
+        top: '10px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        background: 'rgba(255, 0, 0, 0.8)',
+        color: '#fff',
+        padding: '10px 20px',
+        borderRadius: '5px',
+        fontFamily: 'monospace',
+        fontSize: '14px',
+        pointerEvents: 'none',
+        zIndex: 9999,
+      }}>
+        {initStatus}
+      </div>
+    </div>
   );
 };
