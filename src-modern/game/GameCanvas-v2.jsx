@@ -8,8 +8,11 @@ import { ParticleSystem } from './systems/ParticleSystem';
 import { LootManager } from './systems/LootSystem';
 import { FloatingTextManager } from './systems/AnimationSystem';
 import { CameraEffects } from './systems/CameraEffects';
+import { QuestSystem } from './systems/QuestSystem';
+import { AchievementSystem } from './systems/AchievementSystem';
 import { useGameStore } from './stores/useGameStore';
 import { useControls } from './hooks/useControls';
+import { QuestPanel } from '../components/UI/QuestPanel';
 
 /**
  * GameCanvas V2 - Direct Pixi.js Integration
@@ -37,13 +40,19 @@ export const GameCanvas = () => {
     playerHp: 100,
     playerMaxHp: 100,
     gold: 0,
+    kills: 0,
+    surviveTime: 0,
     combatSystem: null,
     enemyManager: null,
     particleSystem: null,
     lootManager: null,
     floatingTextManager: null,
     cameraEffects: null,
+    questSystem: null,
+    achievementSystem: null,
   });
+  const [quests, setQuests] = useState([]);
+  const [achievements, setAchievements] = useState([]);
   const [initStatus, setInitStatus] = useState('Initializing...');
 
   const controls = useControls();
