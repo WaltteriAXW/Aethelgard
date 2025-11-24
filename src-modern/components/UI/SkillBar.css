@@ -1,0 +1,149 @@
+/* SkillBar Styles */
+
+.skill-bar {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  z-index: 50;
+}
+
+.skill-slot {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  background: rgba(20, 20, 30, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.skill-slot:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.skill-slot.ready {
+  border-color: rgba(34, 197, 94, 0.6);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+}
+
+.skill-slot.cooldown {
+  border-color: rgba(239, 68, 68, 0.4);
+  cursor: not-allowed;
+}
+
+.skill-icon {
+  font-size: 32px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.cooldown-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1;
+  transition: height 0.1s linear;
+}
+
+.cooldown-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.skill-hotkey {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: bold;
+  color: #ffffff;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.skill-name {
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.skill-slot:hover .skill-name {
+  opacity: 1;
+}
+
+/* Glow animation for ready skills */
+@keyframes skill-ready-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.6);
+  }
+}
+
+.skill-slot.ready {
+  animation: skill-ready-glow 2s infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .skill-bar {
+    bottom: 60px;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .skill-slot {
+    width: 52px;
+    height: 52px;
+  }
+
+  .skill-icon {
+    font-size: 26px;
+  }
+
+  .cooldown-text {
+    font-size: 16px;
+  }
+}

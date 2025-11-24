@@ -181,6 +181,59 @@ export class ParticleSystem {
   }
 
   /**
+   * Create explosion effect (for skills)
+   */
+  createExplosion(x, y, color = 0xff4500) {
+    const particleCount = 25;
+
+    for (let i = 0; i < particleCount; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 120 + Math.random() * 180;
+
+      this.particles.push(new Particle(x, y, {
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 0.6 + Math.random() * 0.4,
+        color: color,
+        size: 6 + Math.random() * 6,
+        gravity: 200,
+        glow: true,
+        shrink: true,
+      }));
+    }
+  }
+
+  /**
+   * Create circle explosion effect (for AOE skills)
+   */
+  createCircleExplosion(x, y, radius, color = 0xffaa00) {
+    const particleCount = 40;
+
+    for (let i = 0; i < particleCount; i++) {
+      const angle = (i / particleCount) * Math.PI * 2;
+      const speed = 150 + Math.random() * 100;
+
+      this.particles.push(new Particle(x, y, {
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 0.8,
+        color: color,
+        size: 5 + Math.random() * 5,
+        gravity: 50,
+        glow: true,
+        shrink: true,
+      }));
+    }
+  }
+
+  /**
+   * Create a single particle (for general use)
+   */
+  createParticle(x, y, config) {
+    this.particles.push(new Particle(x, y, config));
+  }
+
+  /**
    * Get all active particles
    */
   getParticles() {
