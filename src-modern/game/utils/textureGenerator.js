@@ -1,158 +1,280 @@
 import * as PIXI from 'pixi.js';
 
 /**
- * Texture Generator - Converts ASCII art to Pixi.js Textures
- * This allows us to use the existing pixel art definitions
- * while leveraging GPU acceleration
+ * Modern Texture Generator - High-quality detailed sprites
+ * 32x32 resolution with advanced shading and detail
  */
 
-// Enhanced color palettes - Tier 1 Edition
+// Modern color palettes with gradients and shading
 const palettes = {
   hero: {
-    a: '#2c5f8d',  // Rich armor blue
-    s: '#ffd7a8',  // Warm skin tone
-    c: '#5da5d5',  // Vibrant cape
-    h: '#ffffff',  // Bright highlights
-    x: '#ffa500',  // Golden emblem
-    o: '#1a3a52'   // Dark outline
+    // Armor
+    a1: '#1a3a52', // Darkest armor shadow
+    a2: '#2c5f8d', // Dark armor
+    a3: '#4a7fa8', // Medium armor
+    a4: '#6b9fc4', // Light armor
+    a5: '#8fb9d9', // Brightest armor highlight
+    // Skin
+    s1: '#d4a574', // Shadow skin
+    s2: '#ffd7a8', // Base skin
+    s3: '#ffebb8', // Light skin
+    // Cape
+    c1: '#3d6b99', // Dark cape
+    c2: '#5da5d5', // Medium cape
+    c3: '#7ec4f0', // Light cape
+    // Gold/Emblem
+    g1: '#b8860b', // Dark gold
+    g2: '#ffa500', // Medium gold
+    g3: '#ffd700', // Bright gold
+    // Highlights
+    h: '#ffffff',  // White highlights
+    o: '#0a0a0a'   // Black outline
   },
   skel: {
-    a: '#1a1a2e',  // Deep shadow
-    b: '#f0f4f8',  // Bright bone white
-    r: '#ff2a2a',  // Glowing red eyes
-    d: '#8b8b9e',  // Dark bone
-    o: '#0f0f1a'   // Black outline
+    // Bone
+    b1: '#8b8b9e', // Shadow bone
+    b2: '#c0c0d4', // Dark bone
+    b3: '#e0e0f0', // Medium bone
+    b4: '#f0f4f8', // Light bone
+    b5: '#ffffff', // Bright bone
+    // Eyes
+    r1: '#cc0000', // Dark red
+    r2: '#ff2a2a', // Bright red
+    r3: '#ff6666', // Glow red
+    // Shadow
+    a1: '#0f0f1a', // Darkest shadow
+    a2: '#1a1a2e', // Medium shadow
+    o: '#000000'   // Black outline
   },
   wraith: {
-    a: '#1e1e3f',  // Dark void
-    b: '#8257e5',  // Vivid purple
-    e: '#c084fc',  // Bright purple glow
-    r: '#ff0080',  // Hot pink eyes
-    d: '#4a3a6e',  // Dark purple
+    // Purple body
+    p1: '#2a1f3d', // Darkest purple
+    p2: '#4a3a6e', // Dark purple
+    p3: '#6b5499', // Medium purple
+    p4: '#8257e5', // Bright purple
+    p5: '#a67bf5', // Light purple
+    p6: '#c084fc', // Brightest purple glow
+    // Eyes
+    r1: '#cc0055', // Dark pink
+    r2: '#ff0080', // Hot pink
+    r3: '#ff66b3', // Light pink glow
+    // Ethereal effect
+    e1: '#9f7aea', // Glow 1
+    e2: '#b794f4', // Glow 2
+    e3: '#d6bcfa', // Glow 3
     o: '#0d0d1f'   // Black outline
   },
   golem: {
-    a: '#3a4a52',  // Dark stone
-    b: '#5d7d72',  // Medium stone
-    c: '#9fbfb0',  // Light stone
-    e: '#ff8c00',  // Glowing orange core
-    h: '#ffa500',  // Bright orange
-    o: '#1f2729'   // Black outline
+    // Stone
+    s1: '#1f2729', // Darkest stone
+    s2: '#3a4a52', // Dark stone
+    s3: '#4d5d65', // Medium-dark stone
+    s4: '#5d7d72', // Medium stone
+    s5: '#7a9a8a', // Medium-light stone
+    s6: '#9fbfb0', // Light stone
+    s7: '#c0d9c9', // Lightest stone
+    // Core
+    c1: '#cc5500', // Dark orange
+    c2: '#ff6600', // Medium orange
+    c3: '#ff8c00', // Bright orange
+    c4: '#ffa500', // Yellow-orange
+    c5: '#ffcc00', // Golden glow
+    o: '#000000'   // Black outline
   },
   loot: {
-    g: '#ffd700',  // Pure gold
+    g1: '#8b6914', // Dark gold
+    g2: '#b8860b', // Medium-dark gold
+    g3: '#daa520', // Medium gold
+    g4: '#ffd700', // Bright gold
+    g5: '#ffed4e', // Yellow glow
     w: '#ffffff',  // White shine
-    y: '#ffed4e',  // Yellow glow
-    o: '#b8860b'   // Dark gold outline
+    o: '#5a4a0a'   // Dark outline
   }
 };
 
-// Enhanced sprite definitions (16x16 ASCII art) - Tier 1 Edition
+// Modern 32x32 detailed sprite definitions
 const definitions = {
   hero: [
-    '.....oooooo.....',
-    '....ohhhhhho....',
-    '...ohhssssho....',
-    '...ohsshssho....',
-    '..ooaaccccao....',
-    '..oacxxccxcao...',
-    '..oacccccccao...',
-    '..oaacccccaao...',
-    '...oaccccco.....',
-    '...oaa..aao.....',
-    '..oaao.oaaao....',
-    '..oaa...oaao....',
-    '..oaa...oaao....',
-    '.oaa.....oaao...',
-    '................',
-    '................'
+    '................................',
+    '................................',
+    '..........oooooooooo............',
+    '........ooh4h4h4h4h4oo..........',
+    '.......oh4s3s3s2s2s3s3o.........',
+    '......oh4s3s2s2s2s2s2s3o........',
+    '.....ooh4s2s2s2s2s2s2s2ho.......',
+    '.....oh4s2s2s3s3s2s2s2s2o.......',
+    '....ooa3a4a4c3c2c2c3a4a3oo......',
+    '....oa2a3c2c2g3g2g2c2c3a2o......',
+    '...ooa2c2c2c2c2c2c2c2c2c2oo.....',
+    '...oa2c2c2c2c2c2c2c2c2c2a2o.....',
+    '...oa2c2c2c2c2c2c2c2c2c2a2o.....',
+    '..ooa2a3c2c2c2c2c2c2c2c3a2oo....',
+    '..oa1a2a3c2c2c2c2c2c2c3a2a1o....',
+    '...ooa2a2c2c2c2c2c2c2c2a2oo.....',
+    '....ooa2a2c2c2c2c2c2c2a2oo......',
+    '.....ooa2a3a3a3a3a3a3a2oo.......',
+    '......ooa2a2a2a2a2a2a2oo........',
+    '.......ooa2a2oooooa2a2oo........',
+    '.......ooa2a2o....oa2a2o........',
+    '......ooa2a3a2o..oa2a3a2oo......',
+    '.....ooa1a2a2o....oa2a2a1oo.....',
+    '.....oa1a2a2o......oa2a2a1o.....',
+    '....ooa1a2a2o......oa2a2a1oo....',
+    '....oa1a1a2o........oa2a1a1o....',
+    '...ooa1a1a2o........oa2a1a1oo...',
+    '...oa1a1a1o..........oa1a1a1o...',
+    '..ooa1a1a1o..........oa1a1a1oo..',
+    '..oa1a1ooo............oooa1a1o..',
+    '................................',
+    '................................'
   ],
   skel: [
-    '.....oooooo.....',
-    '....oobbbbo.....',
-    '...oobrrrbo.....',
-    '...oobbbbboo....',
-    '..oodbbbbdoo....',
-    '..obbbbbbbbo....',
-    '..obbbbbbbbo....',
-    '..oobbbbbboo....',
-    '...oobbbboo.....',
-    '...oad.bdao.....',
-    '..oaod.bdoao....',
-    '..oao..bdoao....',
-    '.oao....aoao....',
-    '................',
-    '................',
-    '................'
+    '................................',
+    '................................',
+    '..........oooooooooo............',
+    '.........ob4b4b4b4b4o...........',
+    '........ob4b5b4b4b5b4o..........',
+    '.......oob3r2r2oor2r2b3oo.......',
+    '......oob3r3r3r1or3r3r1b3o......',
+    '.....oob3b4r2r2oor2r2b4b3oo.....',
+    '.....ob2b3b4b4b4b4b4b4b3b2o.....',
+    '....oob2b3b4b5b4b4b5b4b3b2oo....',
+    '....oa2b2b3b4b4b4b4b4b3b2a2o....',
+    '...ooa2b2b3b4b4b4b4b4b3b2a2oo...',
+    '...oa2b2b3b4b4b4b4b4b4b3b2a2o...',
+    '...oa2b2b3b4b5b4b4b5b4b3b2a2o...',
+    '..ooa2b2b3b4b4b4b4b4b4b3b2a2oo..',
+    '..oa2b2b3b4b4b4b4b4b4b4b3b2a2o..',
+    '...ooa2b2b3b4b4b4b4b4b3b2a2oo...',
+    '....ooa2b2b3b4b4b4b4b3b2a2oo....',
+    '.....ooa2b2b3b4b4b4b3b2a2oo.....',
+    '......ooa2b2b3b4b4b3b2a2oo......',
+    '.......oooa2b2b3b3b2a2ooo.......',
+    '........ooa2b2b3b3b2a2oo........',
+    '........ooa2b1oooob1a2oo........',
+    '.......ooa2b2b1o.ob1b2a2oo......',
+    '......ooa1a2b2o...ob2a2a1oo.....',
+    '.....ooa1a2b2b1o.ob1b2a2a1oo....',
+    '.....oa1a2b2o.....ob2a2a1o......',
+    '....ooa1a2b2o.....ob2a2a1oo.....',
+    '....oa1a1a2o.......oa2a1a1o.....',
+    '...ooa1a1a1o.......oa1a1a1oo....',
+    '................................',
+    '................................'
   ],
   wraith: [
-    '.....oooooo.....',
-    '....oobbbbo.....',
-    '...oobrrrrbo....',
-    '...obeeeeeebo...',
-    '..oodbbbbbdoo...',
-    '..obbbbbbbbbo...',
-    '..obeebbbeebo...',
-    '..oobbbbbbbo....',
-    '...oobbbboo.....',
-    '....oobbbo......',
-    '...ood.bbo......',
-    '..oao..bdo......',
-    '.oao...odo......',
-    '..oao.oo........',
-    '...ooo..........',
-    '................'
+    '................................',
+    '..........oooooooooo............',
+    '.........op5p5p5p5p5o...........',
+    '........op4p5p6e3e3p5p4o........',
+    '.......oop4p5r2r2oor2r2p5p4oo...',
+    '......oop3p4r3r3r1or3r3r1p4p3oo.',
+    '.....oop3p4p5r2r2oor2r2p5p4p3oo.',
+    '.....op2p3p4p5p5p5p5p5p5p4p3p2o.',
+    '....oop2p3p4e2e2e3e3e2e2p4p3p2oo',
+    '....op1p2p3p4p5p6e3e3p6p5p4p3p2o',
+    '...oop1p2p3p4p5p5p5p5p5p4p3p2p1o',
+    '...op1p2p3p4p5p5p5p5p5p5p4p3p2o.',
+    '...op1p2p3p4e2p5p5p5p5e2p4p3p2o.',
+    '..oop1p2p3p4p5e2e2e2e2p5p4p3p2oo',
+    '..op1p2p3p4p5p5p5p5p5p5p4p3p2o..',
+    '...oop1p2p3p4p5p5p5p5p4p3p2p1oo.',
+    '....oop1p2p3p4p5p5p5p4p3p2p1oo..',
+    '.....oop1p2p3p4p5p5p4p3p2p1oo...',
+    '......oop1p2p3p4p5p4p3p2p1oo....',
+    '.......oooop1p2p4p4p2p1oooo.....',
+    '........oooop1p3p3p1oooo........',
+    '.........oooop2p2p2ooo..........',
+    '..........oooop2p2oo............',
+    '..........oooop1p2p1oo..........',
+    '.........oooop1p2p2ooo..........',
+    '........oooop1p2p1ooo...........',
+    '.......ooooop1p2oooo............',
+    '......ooooop1p2ooo..............',
+    '.....ooooop1p1oooo..............',
+    '....oooooop1oooo................',
+    '................................',
+    '................................'
   ],
   golem: [
-    '....oooooooo....',
-    '...oobbbbbbo....',
-    '..oobccccccbo...',
-    '..obcchhccccbo..',
-    '..obcchhhcccbo..',
-    '.oobbbccccbbbo..',
-    '.obbbbccccbbbo..',
-    '..obbbbbbbbbbo..',
-    '..oobbbbbbbboo..',
-    '...oobbbbbboo...',
-    '...oab.bb.bao...',
-    '..oaao.bb.oaao..',
-    '..oao..bb..oao..',
-    '.oao...oo...oao.',
-    '................',
-    '................'
+    '................................',
+    '............oooooooooo..........',
+    '..........oos5s6s6s6s5oo........',
+    '.........oos4s5s6s7s6s5s4oo.....',
+    '........oos3s4s5s6s6s5s4s3oo....',
+    '.......oos3s4s5s6s6s6s5s4s3oo...',
+    '......oos2s3s4s5s6s7s6s5s4s3oo..',
+    '.....oos2s3s4c4c5c5c4c4s4s3s2oo.',
+    '.....os2s3s4c3c4c5c5c4c3s4s3s2o.',
+    '....oos2s3s4c3c4c5c4c3c3s4s3s2o.',
+    '....os1s2s3s4s5c4c4c4s5s4s3s2oo.',
+    '...oos1s2s3s4s5s6s6s6s5s4s3s2s1o',
+    '...os1s2s3s4s5s6s6s6s6s5s4s3s2o.',
+    '..oos1s2s3s4s5s6s7s7s6s5s4s3s2oo',
+    '..os1s2s3s4s5s6s6s6s6s6s5s4s3s2o',
+    '..os1s2s3s4s5s6s6s6s6s6s5s4s3s2o',
+    '.oos1s2s3s4s5s6s6s6s6s6s5s4s3s2o',
+    '.os1s2s3s4s5s6s6s6s6s6s6s5s4s3o.',
+    '.oos1s2s3s4s5s6s6s6s6s6s5s4s3oo.',
+    '..oos1s2s3s4s5s6s6s6s6s5s4s3oo..',
+    '...ooos1s2s3s4s5s6s6s5s4s3s2ooo.',
+    '....oos1s2s3s4s5s6s6s5s4s3s2oo..',
+    '.....oos1s2s3s4s5s5s5s4s3s2oo...',
+    '......ooos1s2s3s4s4s4s3s2s1ooo..',
+    '.......ooos2s2s3s4s4s3s2s2ooo...',
+    '........oos1s2s2ooos2s2s1oo.....',
+    '.........oos1s2s1oos1s2s1oo.....',
+    '........oos1s2s2o.os2s2s1oo.....',
+    '.......oos1s2s2o...os2s2s1oo....',
+    '......oos1s1s2o.....os2s1s1oo...',
+    '.....ooos1s1ooo.....ooos1s1ooo..',
+    '................................'
   ],
   orb: [
-    '................',
-    '................',
-    '....oooooooo....',
-    '...oyggggyo.....',
-    '...ogywwggo.....',
-    '..oygwwwwgyo....',
-    '..ogggggggo.....',
-    '..oyggggyo......',
-    '...oyggyo.......',
-    '....oooo........',
-    '................',
-    '................',
-    '................',
-    '................',
-    '................',
-    '................'
+    '................................',
+    '................................',
+    '............oooooooooo..........',
+    '..........oog4g5g5g5g4oo........',
+    '.........oog3g4g5wg5g4g3oo......',
+    '........oog2g3g4g5g5g4g3g2oo....',
+    '.......oog2g3g4g5wg5g4g3g2oo....',
+    '......oog1g2g3g4g5g5g4g3g2g1oo..',
+    '.....oog1g2g3g4g5g5g5g4g3g2g1oo.',
+    '.....og1g2g3g4wwg5g5wwg4g3g2g1o.',
+    '....oog1g2g3g4g5g5g5g5g4g3g2g1o.',
+    '....og1g2g3g4g5g5g5g5g5g4g3g2oo.',
+    '...oog1g2g3g4g5g5g5g5g5g4g3g2o..',
+    '...og1g2g3g4g4g4g4g4g4g4g3g2g1o.',
+    '..oog1g2g3g4g4g4g4g4g4g3g3g2g1o.',
+    '..og1g2g3g3g3g4g4g4g4g3g3g2g1oo.',
+    '..oog1g2g3g3g3g3g3g3g3g3g2g1oo..',
+    '...oog1g2g3g3g3g3g3g3g3g2g1oo...',
+    '....oog1g2g2g3g3g3g3g3g2g1oo....',
+    '.....oog1g2g2g2g3g3g3g2g1oo.....',
+    '......oogg1g2g2g2g2g2g1gooo.....',
+    '.......oooog1g2g2g2g1goooo......',
+    '........oooogg1g2g1ggoooo.......',
+    '.........oooogg1g1ggooo.........',
+    '..........oooggggggoo...........',
+    '...........ooogggooo............',
+    '............ooooooo.............',
+    '............................................',
+    '................................',
+    '................................',
+    '................................',
+    '................................'
   ]
 };
 
 /**
- * Convert ASCII art array to Pixi.js Texture
- * @param {string[]} pixelArray - 16x16 array of characters
- * @param {Object} palette - Color mapping {char: hexColor}
- * @param {number} scale - Pixel scale (default 3 for retro look)
- * @returns {PIXI.Texture}
+ * Convert high-res ASCII art array to Pixi.js Texture
+ * Now supports 32x32 sprites for more detail
  */
-export function createTextureFromAscii(pixelArray, palette, scale = 3) {
+export function createTextureFromAscii(pixelArray, palette, scale = 2) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
 
-  const baseSize = 16;
+  const baseSize = pixelArray.length; // Auto-detect size (32x32 or 16x16)
   canvas.width = baseSize * scale;
   canvas.height = baseSize * scale;
 
@@ -173,19 +295,18 @@ export function createTextureFromAscii(pixelArray, palette, scale = 3) {
 
 /**
  * Generate all game textures
- * Call this once at startup
- * @returns {Object} Map of sprite name to PIXI.Texture
+ * Now creates high-resolution modern sprites
  */
 export function generateAllTextures() {
   const textures = {};
 
-  // Palette mapping (some sprites share palettes)
+  // Palette mapping
   const paletteMapping = {
     hero: 'hero',
     skel: 'skel',
     wraith: 'wraith',
     golem: 'golem',
-    orb: 'loot', // orb uses loot palette
+    orb: 'loot',
   };
 
   for (const [name, definition] of Object.entries(definitions)) {
@@ -193,22 +314,20 @@ export function generateAllTextures() {
     const palette = palettes[paletteName];
 
     if (!palette) {
-      console.error(`[TextureGen] Missing palette for ${name} (looked for ${paletteName})`);
+      console.error(`[TextureGen] Missing palette for ${name}`);
       continue;
     }
 
-    textures[name] = createTextureFromAscii(definition, palette, 3);
+    // Use scale 2 for 32x32 sprites (makes them 64x64 final)
+    textures[name] = createTextureFromAscii(definition, palette, 2);
   }
 
-  console.log('[TextureGen] Generated textures:', Object.keys(textures));
+  console.log('[TextureGen] Generated modern textures:', Object.keys(textures));
   return textures;
 }
 
 /**
  * Create a simple tile texture (for map)
- * @param {string} color - Hex color
- * @param {number} size - Tile size in pixels
- * @returns {PIXI.Texture}
  */
 export function createTileTexture(color, size = 48) {
   const canvas = document.createElement('canvas');
