@@ -24,7 +24,7 @@ export const GameCanvas = () => {
   const enemyContainerRef = useRef(null);
   const particleGraphicsRef = useRef(null);
   const lootContainerRef = useRef(null);
-  const floatingTextGraphicsRef = useRef(null);
+  const floatingTextContainerRef = useRef(null);
   const flashGraphicsRef = useRef(null);
   const gameDataRef = useRef({
     map: null,
@@ -169,10 +169,10 @@ export const GameCanvas = () => {
       particleGraphicsRef.current = particleGraphics;
       worldContainer.addChild(particleGraphics);
 
-      // Create floating text graphics (rendered on top of particles)
-      const floatingTextGraphics = new PIXI.Graphics();
-      floatingTextGraphicsRef.current = floatingTextGraphics;
-      worldContainer.addChild(floatingTextGraphics);
+      // Create floating text container (rendered on top of particles)
+      const floatingTextContainer = new PIXI.Container();
+      floatingTextContainerRef.current = floatingTextContainer;
+      worldContainer.addChild(floatingTextContainer);
 
       // Create lighting overlay
       const lightingGraphics = new PIXI.Graphics();
@@ -597,16 +597,17 @@ export const GameCanvas = () => {
   };
 
   /**
-   * Render floating text (damage numbers, gold, etc)
+   * Render floating text (damage numbers, gold, etc) - FIXED
    */
   const renderFloatingText = () => {
-    const g = floatingTextGraphicsRef.current;
+    const container = floatingTextContainerRef.current;
     const data = gameDataRef.current;
     const floatingTextManager = data.floatingTextManager;
 
-    if (!g || !floatingTextManager) return;
+    if (!container || !floatingTextManager) return;
 
-    g.clear();
+    // Clear old text objects
+    container.removeChildren();
 
     const texts = floatingTextManager.getTexts();
     for (const text of texts) {
@@ -614,33 +615,39 @@ export const GameCanvas = () => {
       const scale = text.getScale();
       const size = text.size * scale;
 
-      // Draw shadow
-      g.text({
+      // Create shadow text
+      const shadowText = new PIXI.Text({
         text: text.text,
-        x: text.x + 2,
-        y: text.y + 2,
         style: {
-          fontFamily: 'monospace',
+          fontFamily: 'Arial, sans-serif',
           fontSize: size,
           fill: 0x000000,
           fontWeight: 'bold',
-          alpha: alpha * 0.5,
-        },
+          align: 'center',
+        }
       });
+      shadowText.anchor.set(0.5);
+      shadowText.x = text.x + 2;
+      shadowText.y = text.y + 2;
+      shadowText.alpha = alpha * 0.5;
+      container.addChild(shadowText);
 
-      // Draw main text
-      g.text({
+      // Create main text
+      const mainText = new PIXI.Text({
         text: text.text,
-        x: text.x,
-        y: text.y,
         style: {
-          fontFamily: 'monospace',
+          fontFamily: 'Arial, sans-serif',
           fontSize: size,
           fill: text.color,
           fontWeight: 'bold',
-          alpha: alpha,
-        },
+          align: 'center',
+        }
       });
+      mainText.anchor.set(0.5);
+      mainText.x = text.x;
+      mainText.y = text.y;
+      mainText.alpha = alpha;
+      container.addChild(mainText);
     }
   };
 
