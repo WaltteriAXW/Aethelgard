@@ -44,6 +44,10 @@ export const useControls = () => {
     dash: keys['ShiftLeft'] || keys['ShiftRight'],
     interact: keys['KeyE'],
 
+    // Skills
+    skill1: keys['Digit1'],
+    skill2: keys['Digit2'],
+
     // UI
     inventory: keys['KeyI'],
     map: keys['KeyM'],

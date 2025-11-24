@@ -10,15 +10,17 @@ import { FloatingTextManager } from './systems/AnimationSystem';
 import { CameraEffects } from './systems/CameraEffects';
 import { QuestSystem } from './systems/QuestSystem';
 import { AchievementSystem } from './systems/AchievementSystem';
+import { SkillSystem } from './systems/SkillSystem';
 import { useGameStore } from './stores/useGameStore';
 import { useControls } from './hooks/useControls';
 import { QuestPanel } from '../components/UI/QuestPanel';
+import { SkillBar } from '../components/UI/SkillBar';
 
 /**
  * GameCanvas V2 - Direct Pixi.js Integration
  * More reliable than @pixi/react for complex games
  */
-export const GameCanvas = () => {
+export const GameCanvas = ({ selectedCharacter, onGameOver, isPaused = false }) => {
   const canvasRef = useRef(null);
   const appRef = useRef(null);
   const playerSpriteRef = useRef(null);
@@ -39,6 +41,7 @@ export const GameCanvas = () => {
     playerFacingRight: true,
     playerHp: 100,
     playerMaxHp: 100,
+    playerSpeed: 220,
     gold: 0,
     kills: 0,
     surviveTime: 0,
@@ -50,9 +53,12 @@ export const GameCanvas = () => {
     cameraEffects: null,
     questSystem: null,
     achievementSystem: null,
+    skillSystem: null,
+    isDead: false,
   });
   const [quests, setQuests] = useState([]);
   const [achievements, setAchievements] = useState([]);
+  const [skills, setSkills] = useState([]);
   const [initStatus, setInitStatus] = useState('Initializing...');
 
   const controls = useControls();
@@ -67,10 +73,32 @@ export const GameCanvas = () => {
     controlsRef.current = controls;
   }, [controls]);
 
+  // Apply character stats and skills when selected
+  useEffect(() => {
+    if (selectedCharacter) {
+      const data = gameDataRef.current;
+      data.playerMaxHp = selectedCharacter.stats.hp;
+      data.playerHp = selectedCharacter.stats.hp;
+      data.playerSpeed = selectedCharacter.stats.speed;
+
+      // Update combat damage if combat system exists
+      if (data.combatSystem) {
+        data.combatSystem.attackDamage = selectedCharacter.stats.damage;
+      }
+
+      // Load skills for character class
+      if (data.skillSystem) {
+        const characterSkills = data.skillSystem.loadSkillsForClass(selectedCharacter.id);
+        setSkills([...characterSkills]); // Update UI
+      }
+
+      console.log('[GameCanvas] Applied character stats:', selectedCharacter.stats);
+    }
+  }, [selectedCharacter]);
+
   const CANVAS_WIDTH = 1024;
   const CANVAS_HEIGHT = 576;
   const TILE_SIZE = 48;
-  const SPEED = 220;
 
   /**
    * Initialize Pixi.js Application
@@ -122,6 +150,9 @@ export const GameCanvas = () => {
       const lootManager = new LootManager();
       const floatingTextManager = new FloatingTextManager();
       const cameraEffects = new CameraEffects();
+      const questSystem = new QuestSystem();
+      const achievementSystem = new AchievementSystem();
+      const skillSystem = new SkillSystem();
 
       gameDataRef.current.combatSystem = combatSystem;
       gameDataRef.current.enemyManager = enemyManager;
@@ -129,6 +160,18 @@ export const GameCanvas = () => {
       gameDataRef.current.lootManager = lootManager;
       gameDataRef.current.floatingTextManager = floatingTextManager;
       gameDataRef.current.cameraEffects = cameraEffects;
+      gameDataRef.current.questSystem = questSystem;
+      gameDataRef.current.achievementSystem = achievementSystem;
+      gameDataRef.current.skillSystem = skillSystem;
+
+      // Initialize quests and achievements UI
+      setQuests(questSystem.getActiveQuests());
+      setAchievements(achievementSystem.getAllAchievements());
+
+      // Generate initial quest
+      const initialQuest = questSystem.generateQuest(1);
+      questSystem.addQuest(initialQuest);
+      setQuests(questSystem.getActiveQuests());
 
       console.log('[GameCanvas] Systems initialized:', {
         combatSystem,
@@ -136,7 +179,10 @@ export const GameCanvas = () => {
         particleSystem,
         lootManager,
         floatingTextManager,
-        cameraEffects
+        cameraEffects,
+        questSystem,
+        achievementSystem,
+        skillSystem
       });
 
       // Create containers
@@ -265,6 +311,11 @@ export const GameCanvas = () => {
     const dt = delta / 60;
     const data = gameDataRef.current;
     const map = data.map;
+
+    // Pause game if paused or dead
+    if (isPaused || data.isDead) {
+      return;
+    }
     const playerSprite = playerSpriteRef.current;
     const combatSystem = data.combatSystem;
     const enemyManager = data.enemyManager;
@@ -272,6 +323,9 @@ export const GameCanvas = () => {
     const lootManager = data.lootManager;
     const floatingTextManager = data.floatingTextManager;
     const cameraEffects = data.cameraEffects;
+    const questSystem = data.questSystem;
+    const achievementSystem = data.achievementSystem;
+    const skillSystem = data.skillSystem;
 
     if (!playerSprite || !map || !combatSystem || !enemyManager || !particleSystem || !lootManager || !floatingTextManager || !cameraEffects) return;
 
@@ -281,6 +335,10 @@ export const GameCanvas = () => {
     lootManager.update(dt);
     floatingTextManager.update(dt);
     cameraEffects.update(dt);
+    if (skillSystem) {
+      skillSystem.update(dt);
+      setSkills([...skillSystem.getActiveSkills()]); // Update UI
+    }
 
     // Handle movement
     let vx = 0;
@@ -301,8 +359,8 @@ export const GameCanvas = () => {
     }
 
     // Move player
-    const newX = data.playerX + vx * SPEED * dt;
-    const newY = data.playerY + vy * SPEED * dt;
+    const newX = data.playerX + vx * data.playerSpeed * dt;
+    const newY = data.playerY + vy * data.playerSpeed * dt;
 
     // Simple collision (check if tile is walkable)
     const tileX = Math.floor(newX / TILE_SIZE);
@@ -370,6 +428,36 @@ export const GameCanvas = () => {
       }
     }
 
+    // Handle skills
+    if (skillSystem) {
+      const skillContext = {
+        playerX: data.playerX,
+        playerY: data.playerY,
+        playerFacingRight: data.playerFacingRight,
+        map: data.map,
+        enemyManager,
+        particleSystem,
+        floatingTextManager,
+        cameraEffects,
+      };
+
+      // Skill 1 (hotkey 1)
+      if (currentControls.skill1) {
+        const used = skillSystem.useSkill(0, skillContext);
+        if (used) {
+          console.log('[GameCanvas] Used skill 1');
+        }
+      }
+
+      // Skill 2 (hotkey 2)
+      if (currentControls.skill2) {
+        const used = skillSystem.useSkill(1, skillContext);
+        if (used) {
+          console.log('[GameCanvas] Used skill 2');
+        }
+      }
+    }
+
     // Handle item pickup
     if (currentControls.interact) {
       const collected = lootManager.checkPickups(data.playerX, data.playerY);
@@ -398,6 +486,23 @@ export const GameCanvas = () => {
         // Screen shake and red flash when hit
         cameraEffects.addShake(0.6);
         cameraEffects.addFlash(0.4, 0xff0000);
+
+        // Check for death
+        if (data.playerHp <= 0 && !data.isDead) {
+          data.isDead = true;
+          console.log('[GameCanvas] Player died!');
+
+          // Trigger game over with stats
+          if (onGameOver) {
+            onGameOver({
+              kills: data.kills,
+              gold: data.gold,
+              questsCompleted: questSystem.getCompletedCount(),
+              survivalTime: Math.floor(data.surviveTime),
+              level: playerState.level || 1,
+            });
+          }
+        }
       }
     }
 
@@ -723,13 +828,22 @@ export const GameCanvas = () => {
   };
 
   return (
-    <div
-      ref={canvasRef}
-      style={{
-        width: `${CANVAS_WIDTH}px`,
-        height: `${CANVAS_HEIGHT}px`,
-        margin: '0 auto',
-      }}
-    />
+    <>
+      <div
+        ref={canvasRef}
+        style={{
+          width: `${CANVAS_WIDTH}px`,
+          height: `${CANVAS_HEIGHT}px`,
+          margin: '0 auto',
+        }}
+      />
+      {/* Quest Panel Overlay */}
+      <QuestPanel
+        quests={quests}
+        achievements={achievements}
+      />
+      {/* Skill Bar Overlay */}
+      <SkillBar skills={skills} />
+    </>
   );
 };
